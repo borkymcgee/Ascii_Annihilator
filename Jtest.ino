@@ -1,13 +1,45 @@
 void setup() {
+  //anodes
+  /*
+  pinMode(1, OUTPUT); //pin 16->3->1
+  pinMode(0, OUTPUT); //pin 1->2->0
+  pinMode(9, OUTPUT); //pin 15->15->9
+  pinMode(A4, OUTPUT); //pin 2->27->A4
+  pinMode(A5, OUTPUT); //pin 7->28->A5
+  //pinMode(1, OUTPUT); //pin 11->9->OSC1
+  pinMode(11, OUTPUT); //pin 8->17->11
+  pinMode(7, OUTPUT); //pin 9->13->7
+
+  //cathodes
+  pinMode(2, OUTPUT); //pin 14->4->2
+  pinMode(3, OUTPUT); //pin 13->5->3
+  pinMode(4, OUTPUT); //pin 4->6->4
+  pinMode(5, OUTPUT); //pin 3->11->5
+  pinMode(12, OUTPUT); //pin 6->18->12
+//  pinMode(OSC2, OUTPUT); //pin 12->10->OSC2
+  pinMode(13, OUTPUT); //pin 5->19->13
+*/
     DDRB = 0b11111111;
     DDRC = 0b11110000;
     DDRD = 0b11111111;
+
+    pinMode(A0,INPUT_PULLUP);
+    pinMode(A1,INPUT_PULLUP);
+    pinMode(A2,INPUT_PULLUP);
+    pinMode(A3,INPUT_PULLUP);
+    
 }
 
 
 int buttonPress = 0;
 
 void loop() {
+  
+    pinMode(A0,INPUT_PULLUP);
+    pinMode(A1,INPUT_PULLUP);
+    pinMode(A2,INPUT_PULLUP);
+    pinMode(A3,INPUT_PULLUP);
+
     //int buttonPress = 
     readButtons();
 
@@ -31,16 +63,10 @@ void loop() {
 }
 
 void readButtons(){
-
-    pinMode(A0,INPUT_PULLUP);
-    pinMode(A1,INPUT_PULLUP);
-    pinMode(A2,INPUT_PULLUP);
-    pinMode(A3,INPUT_PULLUP);
-
   if(!digitalRead(A0)){
     if(!digitalRead(A3)){
       buttonPress = 0;
-      delay(250);
+      delay(50);
     }else{
     buttonPress = 1;
     }
