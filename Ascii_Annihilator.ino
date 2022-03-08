@@ -1,5 +1,30 @@
 void displayChar(byte digit, char dChar, bool pretty = true);
 void showAscii(bool nonPrinting = false);
+void setButtons(byte buttonStates, bool ignoreSwitch = false);
+byte getButtons(bool ignoreSwitch = false);
+
+const int button_input_pin_bit0 = A3;
+const int button_input_pin_bit1 = A2;
+const int button_input_pin_bit2 = A1;
+const int button_input_pin_bit3 = A0;
+
+const int nibbleSwitchPin = 8;
+
+//how long to wait to debounce
+const int debounceTime = 200;
+
+//game mode, set by holding buttons on startup
+//none: main game mode, all ascii
+//bit 3: printing characters only - NOT IMPLEMENTED
+//bit 0: attract mode, cycle through all ascii
+//bit 3 and 2: look mode, tell you the char corresponding to whatever binary you put in
+//bit 1 and 0: table mode, let you browse
+//2 = cycle through ascii with the buttons
+byte gameMode = 0;
+
+//variables used different ways for different modes
+byte gameByteA = 0;
+byte gameByteB = 0;
 
 //9 frames, 2 for each digit and one for button leds
 byte frameCube[10][6];
@@ -8,14 +33,171 @@ byte frameCube[10][6];
 int currentFrame = 0;
 
 void setup() {
+  randomSeed(analogRead(A3));
   //set up timers - for display and for dimming LEDs (planned)
   timerSetup();
   //initialize frameCube to be empty
   clearCube();
+  //set game mode
+  delay(100);
+  gameMode = getButtons(true);
+  
+  switch(gameMode){
+    case 0b00001000:
+      //alphanumeric characters only
+      displayString("WIMP");
+      gameByteB = wimpRandom();
+      break;
+    case 0b00001100:
+      //displays the char input on the buttons, lookup mode
+      displayString("look");
+      break;
+    case 0b00000011:
+      //browse the ascii table
+      displayString("tabl");
+      break;
+    case 0b00000001:
+      //cycle through all chars, attract mode
+      displayString("attc");
+      break;
+    default:
+      //type the correct byte for the given char
+      displayString("anL8");
+      gameByteB = random(0,128);
+      break;
+  }
+  delay(500);
+  displayString("mode");
+  delay(500);
+  clearCube();
 }
 
 void loop(){
-  showAscii(true);
+  switch(gameMode){
+    case 0b00001000:
+      //printing only game mode
+      annihilateMode();
+      break;
+    case 0b00001100:
+      //displays the char input on the buttons
+      lookMode();
+      break;
+    case 0b00000011:
+      //cycle through chars with buttons
+      tableMode();
+      break;
+    case 0b00000001:
+      //cycle through all ascii characters, attract mode
+      showAscii(true);
+      break;
+    default:
+      //main game mode
+      annihilateMode();
+      break;
+  }
+}
+
+//main game
+//goal is stored in gameByteB
+//buttons being pressed are stored in gameByteA
+void annihilateMode(){
+  //display the char to guess
+  displayChar(3,gameByteB,false);
+
+  //track if the buttons change
+  byte oldState = gameByteA;
+  gameByteA = gameByteA ^= getButtons();
+  //if they do, wait to debounce
+  if(gameByteA != oldState){
+    delay(debounceTime);
+  }
+  setButtons(gameByteA);
+
+  //bit 7 is the 'give up' button
+  if(bitRead(gameByteA,7)){
+    //show the player what the answer is until they press a button
+    while(!getButtons()){
+      setButtons(gameByteB);
+    }
+    displayString("Good");
+    delay(500);
+    displayString("Try!");
+    delay(500);
+    clearCube();
+    gameByteA = 0;
+    if(gameMode == 0b00001000){
+      gameByteB = wimpRandom();
+    }else{
+      gameByteB = random(0,128);
+    }
+  }
+
+  //is the guess correct?
+  if(gameByteA == gameByteB){
+    if(gameMode == 0b00001000) displayString("Okay");
+    else displayString("Good");
+    delay(500);
+    displayString("Job!");
+    delay(500);
+    clearCube();
+    gameByteA = 0;
+    if(gameMode == 0b00001000){
+      gameByteB = wimpRandom();
+    }else{
+      gameByteB = random(0,128);
+    }
+  }
+}
+
+//return a random alphanumeric (not symbol) character
+char wimpRandom(){
+  switch(random(0,3)){
+    case 0:
+      return random(48,58);
+      break;
+    case 1:
+      return random(65,91);
+      break;
+    case 2:
+      return random(97,123);
+      break;
+  }
+}
+
+//displays whatever character is input on the button
+void lookMode(){
+  byte oldState = gameByteA;
+  gameByteA = gameByteA ^= getButtons();
+  if(gameByteA != oldState){
+    delay(debounceTime);
+    clearCube();
+  }
+  setButtons(gameByteA);
+  displayChar(3,gameByteA,false);
+}
+
+void tableMode(){
+  if(getButtons(true) == 0b00000010){
+    gameByteA++;
+    delay(debounceTime);
+    clearCube();
+  }else if(getButtons(true) == 0b00000001){
+    gameByteA++;
+    delay(debounceTime/4);
+    clearCube();
+  }else if(getButtons(true) == 0b00000100){
+    gameByteA--;
+    delay(debounceTime);
+    clearCube();
+  }else if(getButtons(true) == 0b00001000){
+    gameByteA--;
+    delay(debounceTime/4);
+    clearCube();
+  }
+  if(gameByteA > 127 && gameByteA < 192) gameByteA = 0;
+  if(gameByteA > 192) gameByteA = 127;
+  displayChar(3,gameByteA,false);
+  setButtons(gameByteA);
 }
 
 //sets up timers used for display and button LED driving (Latter is planned)
@@ -48,8 +230,15 @@ void showAscii(bool nonPrinting){
   int start = 33;
   if(nonPrinting) start = 0;
   for(byte c = start; c<125; c++){
-    clearCube();
-    displayChar(3,c);
+    //clearCube();
+    if(nonPrinting) displayChar(3,c,false);
+    else{
+      displayChar(0,c);
+      displayChar(1,c);
+      displayChar(2,c);
+      displayChar(3,c);
+    }
+    setButtons(c);
     delay(200);
   }
 }
@@ -57,28 +246,17 @@ void showAscii(bool nonPrinting){
 //sets the frame cube to an empty state, I.E. a totally blank display
 void clearCube(){
   //all of the frames have mostly the same clear state, so set that
-  //also set the button pins to always be high-Z
+  //also set the button LEDs' anode pins to always be high-Z
+  //also set the button's and switch's input pins to pullup
   for(byte frame=0; frame < 10; frame++){
-    frameCube[frame][0] = 0b10110000; //PORTB
-    frameCube[frame][1] = 0b00000000; //PORTC
-    frameCube[frame][2] = 0b00111100; //PORTD
-    frameCube[frame][3] = 0b11110111; //DDRB
+    frameCube[frame][0] = 0b10111001; //PORTB
+    frameCube[frame][1] = 0b00111111; //PORTC
+    frameCube[frame][2] = 0b00111101; //PORTD
+    frameCube[frame][3] = 0b11110110; //DDRB
     frameCube[frame][4] = 0b11000000; //DDRC
     frameCube[frame][5] = 0b11111110; //DDRD
   }
-
-  //set the buttons to not be high-Z on specific frames when they are needed for the display
-  frameCube[1][5] |= 0b00000001; //b1 at 1B, D0
-  frameCube[3][4] |= 0b00010000; //b2 at 2B, C4
-  frameCube[8][4] |= 0b00100000; //b3 at DN, C5
-  frameCube[6][3] |= 0b00001000; //b4 at 4A, B3
-
-  //enable display pins on specific frames
-  setSubDigitPins();
-}
-
-//set each subdigit to be on only on the appropriate frame
-void setSubDigitPins(){
+ 
   //except the pins for the specific subdigits (1A-4B)
   //OR combine those in
   frameCube[0][2] |= 0b00000010; //1A (D1)
@@ -90,6 +268,48 @@ void setSubDigitPins(){
   frameCube[6][0] |= 0b00001000; //4A (B3)
   frameCube[7][2] |= 0b10000000; //4B (D7)
   frameCube[8][1] |= 0b00100000; //DN (C5)
+  
+  //also the special button frame
+  frameCube[9][3] |= 0b00001000; //b4 at BN, B3
+  frameCube[9][4] |= 0b00110000; //b2,3 at BN, C4,5
+  frameCube[9][5] |= 0b00000001; //b1 at BN, D0
+
+  //set the buttons LEDs' anodes to not be high-Z on specific frames when they are needed for the display
+  frameCube[1][5] |= 0b00000001; //b1 at 1B, D0
+  frameCube[3][4] |= 0b00010000; //b2 at 2B, C4
+  frameCube[8][4] |= 0b00100000; //b3 at DN, C5
+  frameCube[6][3] |= 0b00001000; //b4 at 4A, B3
+  
+  //frameCube[9][0] ^= 0b00001000;
+}
+
+byte getButtons(bool ignoreSwitch){
+  byte buttonValue = 0;
+  if(!digitalRead(button_input_pin_bit0)) buttonValue |= (1<<0);
+  if(!digitalRead(button_input_pin_bit1)) buttonValue |= (1<<1);
+  if(!digitalRead(button_input_pin_bit2)) buttonValue |= (1<<2);
+  if(!digitalRead(button_input_pin_bit3)) buttonValue |= (1<<3);
+  if(digitalRead(nibbleSwitchPin) & !ignoreSwitch) buttonValue = buttonValue << 4;
+  return buttonValue;
+}
+
+//sets the button lights to the value in the nibble of buttonValue-
+// -that the switch is set to.
+void setButtons(byte buttonStates, bool ignoreSwitch){
+  
+  if(digitalRead(nibbleSwitchPin) & !ignoreSwitch) buttonStates = buttonStates >> 4;
+  //                to bit v                        v from bit  
+  bitWrite(frameCube[9][2],0,!bitRead(buttonStates, 3));//b1, set D0 low
+  bitWrite(frameCube[9][1],4,!bitRead(buttonStates, 2));//b2, set C4 low
+  bitWrite(frameCube[9][1],5,!bitRead(buttonStates, 1));//b3, set C5 low
+  bitWrite(frameCube[9][0],3,!bitRead(buttonStates, 0));//b4, set B3 low
+//
+//  byte currentState = 0;
+//  bitWrite(currentState,3,bitRead(frameCube[9][2],0));
+//  bitWrite(currentState,2,bitRead(frameCube[9][1],4));
+//  bitWrite(currentState,1,bitRead(frameCube[9][1],5));
+//  bitWrite(currentState,0,bitRead(frameCube[9][0],0));
+  
 }
 
 //sets the specified segments on for the specified subdigit
@@ -105,7 +325,7 @@ void setSegments(byte digit, byte segA, byte segB){
   bitWrite(frameCube[digit*2][0],7,!bitRead(segA, 2)); //F, SA2 to B7
   bitWrite(frameCube[digit*2][0],5,!bitRead(segA, 1)); //G1, SA1 to B5
   //OR combine the colon input so as not to overwrite other digits that need it
-  bitWrite(frameCube[8][2],2,(!bitRead(segA, 0)|bitRead(frameCube[8][2],2))); //CN, SA0 to D2
+  bitWrite(frameCube[8][2],2,!(bitRead(segA, 0)|!bitRead(frameCube[8][2],2))); //CN, SA0 to D2
   
   bitWrite(frameCube[digit*2+1][2],2,!bitRead(segB, 7)); //G2, SB7 to D2
   bitWrite(frameCube[digit*2+1][2],3,!bitRead(segB, 6)); //H, SA6 to D3
@@ -115,7 +335,7 @@ void setSegments(byte digit, byte segA, byte segB){
   bitWrite(frameCube[digit*2+1][0],7,!bitRead(segB, 2)); //M, SA2 to B7
   bitWrite(frameCube[digit*2+1][0],5,!bitRead(segB, 1)); //N, SA1 to B5
   //OR combine the decimal input so as not to overwrite other digits that need it
-  bitWrite(frameCube[8][2],3,(!bitRead(segB, 0)|bitRead(frameCube[8][2],3))); //DP, SA0 to D3
+  bitWrite(frameCube[8][2],3,!(bitRead(segB, 0)|!bitRead(frameCube[8][2],3))); //DP, SA0 to D3
 }
 
 //display the given 4-character ASCII string on the display
@@ -126,10 +346,6 @@ void displayString(const char dString[5]){
   displayChar(3,dString[3]);
 }
 
-//sets the button lights to the value in the lowermost nibble of buttonValue
-void displayButtons(byte buttonStates){
-  
-}
 
 //display the specified char at the specified digit on the display
 //pretty makes the letters look pretty, but non-unique? also it makes the space a printing character
@@ -230,7 +446,7 @@ void displayChar(byte digit, char dChar, bool pretty){
       displayString("  RS");
       break;
     case 31:
-      displayString(" US");
+      displayString("  US");
       break;
     case ' ':
       if(pretty){
@@ -242,7 +458,7 @@ void displayChar(byte digit, char dChar, bool pretty){
       break;
     case '!':
       //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01100000, 0b00000001);
+      setSegments(digit, 0b00001100, 0b00000001);
       break;
     case '"':
       //                   ABCDEFGCn   GHJKLMNDp
@@ -254,7 +470,7 @@ void displayChar(byte digit, char dChar, bool pretty){
       break;
     case '$':
       //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10110100, 0b00100100);
+      setSegments(digit, 0b10110110, 0b10100100);
       break;
     case '%':
       //                   ABCDEFGCn   GHJKLMNDp
@@ -362,7 +578,7 @@ void displayChar(byte digit, char dChar, bool pretty){
       break;
     case '?':
       //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11000100, 0b10000100);
+      setSegments(digit, 0b11000100, 0b10000101);
       break;
     case '@':
       //                   ABCDEFGCn   GHJKLMNDp
@@ -370,7 +586,7 @@ void displayChar(byte digit, char dChar, bool pretty){
       break;
     case 'A':
       //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11101110, 0b10000000);
+    setSegments(digit, 0b11101110, 0b10000000);
       break;
     case 'B':
       //                   ABCDEFGCn   GHJKLMNDp
@@ -478,7 +694,7 @@ void displayChar(byte digit, char dChar, bool pretty){
       break;
     case '\\':
       //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b00000000);
+      setSegments(digit, 0b00000000, 0b01001000);
       break;
     case ']':
       //                   ABCDEFGCn   GHJKLMNDp
@@ -604,6 +820,10 @@ void displayChar(byte digit, char dChar, bool pretty){
       //                   ABCDEFGCn   GHJKLMNDp
       setSegments(digit, 0b00000000, 0b10011000);
       break;
+    case '|':
+      //                   ABCDEFGCn   GHJKLMNDp
+      setSegments(digit, 0b00000000, 0b00100100);
+      break;
     case '}':
       //                   ABCDEFGCn   GHJKLMNDp
       setSegments(digit, 0b00000010, 0b01000010);
@@ -612,6 +832,8 @@ void displayChar(byte digit, char dChar, bool pretty){
       //                   ABCDEFGCn   GHJKLMNDp
       setSegments(digit, 0b10000000, 0b00000000);
       break;
+    case 127:
+      displayString(" DEL");
+      break;
   }
-  setSubDigitPins();
 }
