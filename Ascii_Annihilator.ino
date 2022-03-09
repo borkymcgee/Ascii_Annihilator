@@ -3,14 +3,16 @@ void showAscii(bool nonPrinting = false);
 void setButtons(byte buttonStates, bool ignoreSwitch = false);
 byte getButtons(bool ignoreSwitch = false);
 
+//pins that the buttons are connected to
 const int button_input_pin_bit0 = A3;
 const int button_input_pin_bit1 = A2;
 const int button_input_pin_bit2 = A1;
 const int button_input_pin_bit3 = A0;
 
+//pin that the nibble select switch is connected to
 const int nibbleSwitchPin = 8;
 
-//how long to wait to debounce
+//how long in ms to wait to debounce button presses
 const int debounceTime = 200;
 
 //game mode, set by holding buttons on startup
@@ -41,17 +43,11 @@ void setup() {
   //set game mode
   delay(100);
   gameMode = getButtons(true);
-//
-//  if(bitRead(gameMode,0)){
-//    if(bitRead(gameMode,3)) displayChar(0,'p'); //printing ascii only mode
-//    if(bitRead(gameMode,2)) displayChar(1,'d'); //decimals included
-//    if(bitRead(gameMode,1)) displayChar(2,'h'); //hex included
-//    if(bitRead(gameMode,0)) displayChar(3,'n'); //nonprinting ascii included
-//    if(gameMode == 0) displayString("all!")
-//    
-//  }
 
+//set up a random number for if a game mode is picked
   gameByteB = random(0,128);
+
+  //display the mode selected, sometimes do extra setup
   switch(gameMode){
     case 0b00001000:
       //alphanumeric characters only
@@ -90,10 +86,7 @@ void setup() {
 }
 
 void loop(){
-//  char test[3];
-//  itoa(16,test,10);
-//  //displayChar(3,sizeof(test));
-//  displayChar(3,test[1]);
+  //run the selected mode, this probably doesn't need to go in loop();
   switch(gameMode){
     case 0b00001100:
       //displays the char input on the buttons
@@ -114,49 +107,42 @@ void loop(){
   }
 }
 
-//main menu - MAYBE
-void mainMenu(){
-  while(true){
-    displayString("adhm");
-  }
-}
-
 //main game
 //goal is stored in gameByteB
 //buttons being pressed are stored in gameByteA
 void annihilateMode(){
-  char toDisplay[4];
+  
+  //place to store output of itoa
+  char itoa_result[4];
+  
   //display the char to guess
+  //print a leading char to indicate the base requested,
+  //then convert the guess to the appropriate string to display it
   if(bitRead(gameMode,2)){  //decimal
     displayChar(0,'d');
-    itoa(gameByteB,toDisplay,10);
+    itoa(gameByteB,itoa_result,10);
   }else if(bitRead(gameMode,1)){  //hex
     displayChar(0,'x');
-    itoa(gameByteB,toDisplay,16);
-  }else{
+    itoa(gameByteB,itoa_result,16);
+  }else{  //ascii
     displayChar(0,'a');
-    toDisplay[0] = gameByteB;
-    toDisplay[1] = 0;
+    //no conversion neccesary, just plop the guess in
+    itoa_result[0] = gameByteB;
+
+    //manually terminate the string early
+    itoa_result[1] = 0;
   }
-//  char newDisplay[5];
-//
-//  for(int i=0; i < 5; i++){
-//    newDisplay[i] = toDisplay[i];
-//  }
-//  newDisplay[4] = 0;
-  
-  //strncpy(newDisplay,toDisplay,4);
-  
-//  displayChar(3,(char)(sizeof(toDisplay)));
-  if(toDisplay[1] == 0){ //1 digit number
-    displayChar(3,toDisplay[0],false);
-  }else if(toDisplay[2] == 0){ //2 digit number
-    displayChar(2,toDisplay[0],false);
-    displayChar(3,toDisplay[1],false);
+
+  //itoa has no leading spaces, and the length depends on the number of digits it outputs, so we need to manually right-justify it within the display
+  if(itoa_result[1] == 0){ //1 digit number
+    displayChar(3,itoa_result[0],false);
+  }else if(itoa_result[2] == 0){ //2 digit number
+    displayChar(2,itoa_result[0],false);
+    displayChar(3,itoa_result[1],false);
   }else{  //3 digit number
-    displayChar(1,toDisplay[0],false);
-    displayChar(2,toDisplay[1],false);
-    displayChar(3,toDisplay[2],false);
+    displayChar(1,itoa_result[0],false);
+    displayChar(2,itoa_result[1],false);
+    displayChar(3,itoa_result[2],false);
   }
   
   //track if the buttons change
@@ -166,6 +152,7 @@ void annihilateMode(){
   if(gameByteA != oldState){
     delay(debounceTime);
   }
+  //display the gurrent state of the player's guess
   setButtons(gameByteA);
 
   //bit 7 is the 'give up' button
@@ -204,17 +191,6 @@ void annihilateMode(){
   }
 }
 
-void displayNum(int num, int base){
-  switch(base){
-    case 10:
-      displayChar(0,'d');
-      displayChar(1,(num/100)+48);
-      displayChar(2,(num%10)+48);
-    
-  }
-  
-}
-
 //return a random alphanumeric (not symbol) character
 char wimpRandom(){
   switch(random(0,3)){
@@ -230,8 +206,9 @@ char wimpRandom(){
   }
 }
 
-//displays whatever character is input on the button
+//displays whatever character is input on the buttons
 void lookMode(){
+  //only update when needed (might be unnecessary)
   byte oldState = gameByteA;
   gameByteA = gameByteA ^= getButtons();
   if(gameByteA != oldState){
@@ -239,9 +216,11 @@ void lookMode(){
     clearCube();
   }
   setButtons(gameByteA);
+  //display the character on the buttons
   displayChar(3,gameByteA,false);
 }
 
+//browse a virtual ascii table, the inner buttons go back and forth slowly, the outer buttons go back and forth fast
 void tableMode(){
   if(getButtons(true) == 0b00000010){
     gameByteA++;
@@ -270,7 +249,6 @@ void tableMode(){
 void timerSetup(){
   cli();
   TCCR1A = 0;
-  //TCCR1B = 0;
   TCCR1B = 0b00000100;
   TIMSK1 = 0b00000010;
   OCR1A = 64;
@@ -278,11 +256,16 @@ void timerSetup(){
   sei();
 }
 
-//update display and (planned) handle LED dimming
+//update display asynchronously
 ISR(TIMER1_COMPA_vect){
+  //reset timer
   TCNT1 = 0;
+
+  //overflow at 8
   if(currentFrame > 8) currentFrame = 0;
   else currentFrame++;
+
+  //set all the ports according to the state on the current frame in the framecube
   PORTB = frameCube[currentFrame][0];
   PORTC = frameCube[currentFrame][1];
   PORTD = frameCube[currentFrame][2];
@@ -368,14 +351,7 @@ void setButtons(byte buttonStates, bool ignoreSwitch){
   bitWrite(frameCube[9][2],0,!bitRead(buttonStates, 3));//b1, set D0 low
   bitWrite(frameCube[9][1],4,!bitRead(buttonStates, 2));//b2, set C4 low
   bitWrite(frameCube[9][1],5,!bitRead(buttonStates, 1));//b3, set C5 low
-  bitWrite(frameCube[9][0],3,!bitRead(buttonStates, 0));//b4, set B3 low
-//
-//  byte currentState = 0;
-//  bitWrite(currentState,3,bitRead(frameCube[9][2],0));
-//  bitWrite(currentState,2,bitRead(frameCube[9][1],4));
-//  bitWrite(currentState,1,bitRead(frameCube[9][1],5));
-//  bitWrite(currentState,0,bitRead(frameCube[9][0],0));
-  
+  bitWrite(frameCube[9][0],3,!bitRead(buttonStates, 0));//b4, set B3 low 
 }
 
 //sets the specified segments on for the specified subdigit
