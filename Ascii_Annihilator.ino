@@ -45,6 +45,105 @@ byte gameByteB = 0;
 //9 frames, 2 for each digit and one for button leds
 byte frameCube[10][6];
 
+
+const byte asciiSegs[188] = {
+                           0b00001100, 0b00000001, //!
+                           0b01000000, 0b00100000, //"
+                           0b01110010, 0b10100100, //#
+                           0b10110110, 0b10100100, //$
+                           0b00100110, 0b11011010, //%
+                           0b10011010, 0b01011000, //&
+                           0b00000000, 0b00010000, //'
+                           0b00000000, 0b00011000, //(
+                           0b00000000, 0b01000010, //)
+                           0b00000010, 0b11111110, //*
+                           0b00000010, 0b10100100, //+
+                           0b00000000, 0b00000010, //,
+                           0b00000010, 0b10000000, //-
+                           0b00000000, 0b00000001, //.
+                           0b00000000, 0b00010010, ///
+                           0b11111100, 0b00010010, //0
+                           0b01100000, 0b00010000, //1
+                           0b11011010, 0b10000000, //2
+                           0b11110010, 0b10000000, //3
+                           0b01100110, 0b10000000, //4
+                           0b10010110, 0b00001000, //5
+                           0b10011110, 0b00001000, //6
+                           0b10000010, 0b10010100, //7
+                           0b11111110, 0b10000000, //8
+                           0b11110110, 0b10000000, //9
+                           0b00000001, 0b00000000, //:
+                           0b00000000, 0b00100010, //;
+                           0b00010000, 0b00010010, //<
+                           0b00010010, 0b10000000, //=
+                           0b00010000, 0b01001000, //>
+                           0b11000100, 0b10000101, //?
+                           0b11011100, 0b10100000, //@
+                           0b11101110, 0b10000000, //A
+                           0b10011110, 0b00011000, //B
+                           0b10011100, 0b00000000, //C
+                           0b11110000, 0b00100100, //D
+                           0b10011110, 0b10000000, //E
+                           0b10001110, 0b00000000, //F
+                           0b10111100, 0b10000000, //G
+                           0b01101110, 0b10000000, //H
+                           0b10010000, 0b00100100, //I
+                           0b01111000, 0b00000000, //J
+                           0b00001110, 0b00011000, //K
+                           0b00011100, 0b00000000, //L
+                           0b01101100, 0b01010000, //M
+                           0b01101100, 0b00010010, //N
+                           0b11111100, 0b00000000, //O
+                           0b11001110, 0b10000000, //P
+                           0b11111100, 0b00001000, //Q
+                           0b11001110, 0b10001000, //R
+                           0b10110110, 0b10000000, //S
+                           0b10000000, 0b00100100, //T
+                           0b01111100, 0b00000000, //U
+                           0b00001100, 0b00010010, //V
+                           0b01101100, 0b00001010, //W
+                           0b00000000, 0b01011010, //X
+                           0b00000000, 0b01010100, //Y
+                           0b10010000, 0b00010010, //Z
+                           0b10010010, 0b01000010, //[
+                           0b00000000, 0b01001000, //\\
+                           0b10010000, 0b10011000, //]
+                           0b01000000, 0b00010000, //^
+                           0b00010000, 0b00000000, //_
+                           0b00000000, 0b01000000, //`
+                           0b00011010, 0b00000100, //a
+                           0b00111110, 0b10000000, //b
+                           0b00011010, 0b10000000, //c
+                           0b01111010, 0b10000000, //d
+                           0b00011010, 0b00000010, //e
+                           0b00000000, 0b10010100, //f
+                           0b11110000, 0b11000000, //g
+                           0b00101110, 0b10000000, //h
+                           0b00000000, 0b00000100, //i
+                           0b00001000, 0b00100010, //j
+                           0b00000000, 0b00111100, //k
+                           0b00010000, 0b00100100, //l
+                           0b00101010, 0b10000100, //m
+                           0b00001010, 0b00000100, //n
+                           0b00111010, 0b10000000, //o
+                           0b10001110, 0b00010000, //p
+                           0b11100000, 0b11000000, //q
+                           0b00001010, 0b00000000, //r
+                           0b00010000, 0b10001000, //s
+                           0b00011110, 0b00000000, //t
+                           0b00111000, 0b00000000, //u
+                           0b00001000, 0b00000010, //v
+                           0b00101000, 0b00001010, //w
+                           0b00000010, 0b10001010, //x
+                           0b01110000, 0b10100000, //y
+                           0b00010010, 0b00000010, //z
+                           0b00000000, 0b10011000, //{
+                           0b00000000, 0b00100100, //|
+                           0b00000010, 0b01000010, //}
+                           0b10000000, 0b00000000 //~
+                           };
+
+
 //tracks the current frame
 int currentFrame = 0;
 
@@ -91,11 +190,21 @@ void setup(){
 
   startTime = millis();
   annihilateMode();
+  //clearCube();
 }
 
 //void loop(){
-//  displayTime(millis());
-//  delay(100);
+//  for(int i=33;i<255;i++){
+//  displayChar(3,i);
+//  
+//    delay(500);
+//    clearCube();
+//  }
+////  for(int i=0;i<185;i++){
+////      setSegments(3,asciiSegs[i],asciiSegs[i+1]);
+////      
+////  delay(500);
+////  }
 //  }
 
 
@@ -328,7 +437,6 @@ void annihilateMode(){
     if(base == 0) displayChar(0,'a');
 
     while(true){
-      updateButtons();
       setButtons(gameByteA);
     
       //input 255 to give up
@@ -472,9 +580,7 @@ ISR(TIMER1_COMPA_vect){
   DDRD = frameCube[currentFrame][5];
 
   //debounce buttons
-  for(int b=0; b<4;b++){
-    
-  }
+  updateButtons();
   
 }
 
@@ -546,12 +652,12 @@ byte updateButtons(){
   }
   if(!digitalRead(button_input_pin_bit3) && debounceArray[3] == debounceTime){
     buttonValue |= (1<<3);
-    debounceArray[0] = 0;
+    debounceArray[3] = 0;
   }
   if(digitalRead(nibbleSwitchPin)) buttonValue = buttonValue << 4;
   gameByteA = gameByteA ^= buttonValue;
   for(int b=0; b<4; b++){
-    debounceArray[b]++;
+    if(debounceArray[b] < debounceTime) debounceArray[b]++;
   }
 }
 
@@ -604,6 +710,7 @@ void displayString(const char* dString){
 //display the specified char at the specified digit on the display
 //pretty makes the letters look pretty, but non-unique? also it makes the space a printing character
 void displayChar(byte digit, char dChar, bool pretty){
+  
   switch(dChar){
     //if asked to display a non-printing character, print its 3-letter abbreviation
     case 0:
@@ -710,384 +817,10 @@ void displayChar(byte digit, char dChar, bool pretty){
         displayString("  SP");
       }
       break;
-    case '!':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00001100, 0b00000001);
-      break;
-    case '"':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01000000, 0b00100000);
-      break;
-    case '#':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01110010, 0b10100100);
-      break;
-    case '$':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10110110, 0b10100100);
-      break;
-    case '%':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00100110, 0b11011010);
-      break;
-    case '&':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10011010, 0b01011000);
-      break;
-    case '\'':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b00010000);
-      break;
-    case '(':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b00011000);
-      break;
-    case ')':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b01000010);
-      break;
-    case '*':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000010, 0b11111110);
-      break;
-    case '+':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000010, 0b10100100);
-      break;
-    case ',':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b00000010);
-      break;
-    case '-':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000010, 0b10000000);
-      break;
-    case '.':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b00000001);
-      break;
-    case '/':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b00010010);
-      break;
-    case '0':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11111100, 0b00010010);
-      break;
-    case '1':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01100000, 0b00010000);
-      break;
-    case '2':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11011010, 0b10000000);
-      break;
-    case '3':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11110010, 0b10000000);
-      break;
-    case '4':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01100110, 0b10000000);
-      break;
-    case '5':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10010110, 0b00001000);
-      break;
-    case '6':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10011110, 0b00001000);
-      break;
-    case '7':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10000010, 0b10010100);
-      break;
-    case '8':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11111110, 0b10000000);
-      break;
-    case '9':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11110110, 0b10000000);
-      break;
-    case ':':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000001, 0b00000000);
-      break;
-    case ';':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b00100010);
-      break;
-    case '<':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00010000, 0b00010010);
-      break;
-    case '=':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00010010, 0b10000000);
-      break;
-    case '>':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00010000, 0b01001000);
-      break;
-    case '?':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11000100, 0b10000101);
-      break;
-    case '@':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11011100, 0b10100000);
-      break;
-    case 'A':
-      //                   ABCDEFGCn   GHJKLMNDp
-    setSegments(digit, 0b11101110, 0b10000000);
-      break;
-    case 'B':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10011110, 0b00011000);
-      break;
-    case 'C':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10011100, 0b00000000);
-      break;
-    case 'D':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11110000, 0b00100100);
-      break;
-    case 'E':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10011110, 0b10000000);
-      break;
-    case 'F':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10001110, 0b00000000);
-      break;
-    case 'G':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10111100, 0b10000000);
-      break;
-    case 'H':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01101110, 0b10000000);
-      break;
-    case 'I':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10010000, 0b00100100);
-      break;
-    case 'J':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01111000, 0b00000000);
-      break;
-    case 'K':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00001110, 0b00011000);
-      break;
-    case 'L':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00011100, 0b00000000);
-      break;
-    case 'M':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01101100, 0b01010000);
-      break;
-    case 'N':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01101100, 0b00010010);
-      break;
-    case 'O':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11111100, 0b00000000);
-      break;
-    case 'P':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11001110, 0b10000000);
-      break;
-    case 'Q':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11111100, 0b00001000);
-      break;
-    case 'R':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11001110, 0b10001000);
-      break;
-    case 'S':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10110110, 0b10000000);
-      break;
-    case 'T':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10000000, 0b00100100);
-      break;
-    case 'U':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01111100, 0b00000000);
-      break;
-    case 'V':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00001100, 0b00010010);
-      break;
-    case 'W':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01101100, 0b00001010);
-      break;
-    case 'X':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b01011010);
-      break;
-    case 'Y':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b01010100);
-      break;
-    case 'Z':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10010000, 0b00010010);
-      break;
-    case '[':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10010010, 0b01000010);
-      break;
-    case '\\':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b01001000);
-      break;
-    case ']':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10010000, 0b10011000);
-      break;
-    case '^':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01000000, 0b00010000);
-      break;
-    case '_':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00010000, 0b00000000);
-      break;
-    case '`':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b01000000);
-      break;
-    case 'a':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00011010, 0b00000100);
-      break;
-    case 'b':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00111110, 0b10000000);
-      break;
-    case 'c':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00011010, 0b10000000);
-      break;
-    case 'd':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01111010, 0b10000000);
-      break;
-    case 'e':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00011010, 0b00000010);
-      break;
-    case 'f':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b10010100);
-      break;
-    case 'g':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11110000, 0b11000000);
-      break;
-    case 'h':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00101110, 0b10000000);
-      break;
-    case 'i':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b00000100);
-      break;
-    case 'j':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00001000, 0b00100010);
-      break;
-    case 'k':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b00111100);
-      break;
-    case 'l':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00010000, 0b00100100);
-      break;
-    case 'm':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00101010, 0b10000100);
-      break;
-    case 'n':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00001010, 0b00000100);
-      break;
-    case 'o':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00111010, 0b10000000);
-      break;
-    case 'p':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10001110, 0b00010000);
-      break;
-    case 'q':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b11100000, 0b11000000);
-      break;
-    case 'r':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00001010, 0b00000000);
-      break;
-    case 's':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00010000, 0b10001000);
-      break;
-    case 't':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00011110, 0b00000000);
-      break;
-    case 'u':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00111000, 0b00000000);
-      break;
-    case 'v':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00001000, 0b00000010);
-      break;
-    case 'w':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00101000, 0b00001010);
-      break;
-    case 'x':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000010, 0b10001010);
-      break;
-    case 'y':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b01110000, 0b10100000);
-      break;
-    case 'z':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00010010, 0b00000010);
-      break;
-    case '{':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b10011000);
-      break;
-    case '|':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000000, 0b00100100);
-      break;
-    case '}':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b00000010, 0b01000010);
-      break;
-    case '~':
-      //                   ABCDEFGCn   GHJKLMNDp
-      setSegments(digit, 0b10000000, 0b00000000);
-      break;
     case 127:
       displayString(" DEL");
       break;
+    default:
+      setSegments(digit,asciiSegs[dChar*2-66],asciiSegs[dChar*2-65]);
   }
 }
