@@ -41,12 +41,30 @@ void setup() {
   //set game mode
   delay(100);
   gameMode = getButtons(true);
-  
+//
+//  if(bitRead(gameMode,0)){
+//    if(bitRead(gameMode,3)) displayChar(0,'p'); //printing ascii only mode
+//    if(bitRead(gameMode,2)) displayChar(1,'d'); //decimals included
+//    if(bitRead(gameMode,1)) displayChar(2,'h'); //hex included
+//    if(bitRead(gameMode,0)) displayChar(3,'n'); //nonprinting ascii included
+//    if(gameMode == 0) displayString("all!")
+//    
+//  }
+
+  gameByteB = random(0,128);
   switch(gameMode){
     case 0b00001000:
       //alphanumeric characters only
       displayString("WIMP");
       gameByteB = wimpRandom();
+      break;
+    case 0b00000100:
+      //decimal only
+      displayString("dec ");
+      break;
+    case 0b00000010:
+      //hexidecimal only
+      displayString("hex ");
       break;
     case 0b00001100:
       //displays the char input on the buttons, lookup mode
@@ -63,7 +81,6 @@ void setup() {
     default:
       //type the correct byte for the given char
       displayString("anL8");
-      gameByteB = random(0,128);
       break;
   }
   delay(500);
@@ -73,11 +90,11 @@ void setup() {
 }
 
 void loop(){
+//  char test[3];
+//  itoa(16,test,10);
+//  //displayChar(3,sizeof(test));
+//  displayChar(3,test[1]);
   switch(gameMode){
-    case 0b00001000:
-      //printing only game mode
-      annihilateMode();
-      break;
     case 0b00001100:
       //displays the char input on the buttons
       lookMode();
@@ -97,13 +114,51 @@ void loop(){
   }
 }
 
+//main menu - MAYBE
+void mainMenu(){
+  while(true){
+    displayString("adhm");
+  }
+}
+
 //main game
 //goal is stored in gameByteB
 //buttons being pressed are stored in gameByteA
 void annihilateMode(){
+  char toDisplay[4];
   //display the char to guess
-  displayChar(3,gameByteB,false);
-
+  if(bitRead(gameMode,2)){  //decimal
+    displayChar(0,'d');
+    itoa(gameByteB,toDisplay,10);
+  }else if(bitRead(gameMode,1)){  //hex
+    displayChar(0,'x');
+    itoa(gameByteB,toDisplay,16);
+  }else{
+    displayChar(0,'a');
+    toDisplay[0] = gameByteB;
+    toDisplay[1] = 0;
+  }
+//  char newDisplay[5];
+//
+//  for(int i=0; i < 5; i++){
+//    newDisplay[i] = toDisplay[i];
+//  }
+//  newDisplay[4] = 0;
+  
+  //strncpy(newDisplay,toDisplay,4);
+  
+//  displayChar(3,(char)(sizeof(toDisplay)));
+  if(toDisplay[1] == 0){ //1 digit number
+    displayChar(3,toDisplay[0],false);
+  }else if(toDisplay[2] == 0){ //2 digit number
+    displayChar(2,toDisplay[0],false);
+    displayChar(3,toDisplay[1],false);
+  }else{  //3 digit number
+    displayChar(1,toDisplay[0],false);
+    displayChar(2,toDisplay[1],false);
+    displayChar(3,toDisplay[2],false);
+  }
+  
   //track if the buttons change
   byte oldState = gameByteA;
   gameByteA = gameByteA ^= getButtons();
@@ -147,6 +202,17 @@ void annihilateMode(){
       gameByteB = random(0,128);
     }
   }
+}
+
+void displayNum(int num, int base){
+  switch(base){
+    case 10:
+      displayChar(0,'d');
+      displayChar(1,(num/100)+48);
+      displayChar(2,(num%10)+48);
+    
+  }
+  
 }
 
 //return a random alphanumeric (not symbol) character
@@ -339,7 +405,7 @@ void setSegments(byte digit, byte segA, byte segB){
 }
 
 //display the given 4-character ASCII string on the display
-void displayString(const char dString[5]){
+void displayString(const char* dString){
   displayChar(0,dString[0]);
   displayChar(1,dString[1]);
   displayChar(2,dString[2]);
