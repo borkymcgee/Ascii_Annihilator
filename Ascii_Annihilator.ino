@@ -22,7 +22,11 @@ const int debounceTime = 200;
 //bit 3 and 2: look mode, tell you the char corresponding to whatever binary you put in
 //bit 1 and 0: table mode, let you browse
 //2 = cycle through ascii with the buttons
+//15 = only quiz on hard ascii
 byte gameMode = 0;
+
+//whether to quiz on numbers higher than 15
+bool beginnerMode = false;
 
 //variables used different ways for different modes
 byte gameByteA = 0;
@@ -34,161 +38,162 @@ byte frameCube[10][6];
 //tracks the current frame
 int currentFrame = 0;
 
-void setup() {
-  randomSeed(analogRead(A3));
-  //set up timers - for display and for dimming LEDs (planned)
+void setup(){
+  randomSeed(analogRead(A0)+analogRead(A1)+analogRead(A2)+analogRead(A3));
+  //set up timers - for updating display
   timerSetup();
   //initialize frameCube to be empty
   clearCube();
   //set game mode
   delay(100);
   gameMode = getButtons(true);
+  beginnerMode = bitRead(gameMode,0) && !(gameMode == 15);
 
-//set up a random number for if a game mode is picked
-  gameByteB = random(0,128);
-
-  //display the mode selected, sometimes do extra setup
-  switch(gameMode){
-    case 0b00001000:
-      //alphanumeric characters only
+  if(gameMode != 15){
+    if(beginnerMode){
       displayString("WIMP");
-      gameByteB = wimpRandom();
-      break;
-    case 0b00000100:
-      //decimal only
-      displayString("dec ");
-      break;
-    case 0b00000010:
-      //hexidecimal only
-      displayString("hex ");
-      break;
-    case 0b00001100:
-      //displays the char input on the buttons, lookup mode
-      displayString("look");
-      break;
-    case 0b00000011:
-      //browse the ascii table
-      displayString("tabl");
-      break;
-    case 0b00000001:
-      //cycle through all chars, attract mode
-      displayString("attc");
-      break;
-    default:
-      //type the correct byte for the given char
-      displayString("anL8");
-      break;
+      delay(500);
+    }
+    
+    clearCube();
+    
+    if(bitRead(gameMode,3)){
+      displayChar(0,'a');
+    }
+    if(bitRead(gameMode,2)){
+      displayChar(1,'d');
+    }
+    if(bitRead(gameMode,1)){
+      displayChar(2,'x');
+    }
+    if(gameMode < 2){
+      displayString("full");
+    }
+  }else{
+    displayString("XPRT");
+    delay(500);
+    displayString("mode");
   }
+    
   delay(500);
-  displayString("mode");
-  delay(500);
-  clearCube();
-}
+  
+  //if all the buttons are held down, we can't get a random seed, so spin wheels until they release some
+  while(getButtons(true) == 15){}
 
-void loop(){
-  //run the selected mode, this probably doesn't need to go in loop();
-  switch(gameMode){
-    case 0b00001100:
-      //displays the char input on the buttons
-      lookMode();
-      break;
-    case 0b00000011:
-      //cycle through chars with buttons
-      tableMode();
-      break;
-    case 0b00000001:
-      //cycle through all ascii characters, attract mode
-      showAscii(true);
-      break;
-    default:
-      //main game mode
-      annihilateMode();
-      break;
-  }
+  PORTC = 0b00110000;
+  randomSeed(analogRead(A0)+analogRead(A1)+analogRead(A2)+analogRead(A3));
+  PORTC = 0b00111111;
+  
+  clearCube();
+  annihilateMode();
 }
 
 //main game
 //goal is stored in gameByteB
 //buttons being pressed are stored in gameByteA
 void annihilateMode(){
+  //stores what base the current guess is in
+  //0=ascii
+  //1=dec
+  //2=hex
+  int base = 0;
+
   
   //place to store output of itoa
   char itoa_result[4];
+  while(true){
+    while(gameMode != 15){
+      base = random(0,3);
+      if(gameMode < 2) break;
+      else if(base == 2 && bitRead(gameMode,1)) break;
+      else if(base == 1 && bitRead(gameMode,2)) break;
+      else if(base == 0 && bitRead(gameMode,3)) break;
+    }
+
+    if(beginnerMode){
+      gameByteB = random(0,16);
+      if(base == 0) gameByteB = wimpRandom();
+    }else if(gameMode == 15){
+      gameByteB = expertRandom();
+    }else if(base == 0) gameByteB = random(0,128);
+    else gameByteB = random(0,256);
+
+    //display the char to guess
+    //print a leading char to indicate the base requested,
+    //then convert the guess to the appropriate string to display it
+    if(base == 1){  //decimal
+      displayChar(0,'d');
+      itoa(gameByteB,itoa_result,10);
+    }else if(base == 2){  //hex
+      displayChar(0,'x');
+      itoa(gameByteB,itoa_result,16);
+      for (auto & c: itoa_result) c = toupper(c);
+    }else{  //ascii
+      displayChar(0,'a');
+      //no conversion neccesary, just plop the guess in
+      itoa_result[0] = gameByteB;
   
-  //display the char to guess
-  //print a leading char to indicate the base requested,
-  //then convert the guess to the appropriate string to display it
-  if(bitRead(gameMode,2)){  //decimal
-    displayChar(0,'d');
-    itoa(gameByteB,itoa_result,10);
-  }else if(bitRead(gameMode,1)){  //hex
-    displayChar(0,'x');
-    itoa(gameByteB,itoa_result,16);
-  }else{  //ascii
-    displayChar(0,'a');
-    //no conversion neccesary, just plop the guess in
-    itoa_result[0] = gameByteB;
+      //manually terminate the string early
+      itoa_result[1] = 0;
+    }
 
-    //manually terminate the string early
-    itoa_result[1] = 0;
-  }
-
-  //itoa has no leading spaces, and the length depends on the number of digits it outputs, so we need to manually right-justify it within the display
-  if(itoa_result[1] == 0){ //1 digit number
-    displayChar(3,itoa_result[0],false);
-  }else if(itoa_result[2] == 0){ //2 digit number
-    displayChar(2,itoa_result[0],false);
-    displayChar(3,itoa_result[1],false);
-  }else{  //3 digit number
-    displayChar(1,itoa_result[0],false);
-    displayChar(2,itoa_result[1],false);
-    displayChar(3,itoa_result[2],false);
-  }
   
-  //track if the buttons change
-  byte oldState = gameByteA;
-  gameByteA = gameByteA ^= getButtons();
-  //if they do, wait to debounce
-  if(gameByteA != oldState){
-    delay(debounceTime);
-  }
-  //display the gurrent state of the player's guess
-  setButtons(gameByteA);
+    //itoa has no leading spaces, and the length depends on the number of digits it outputs, so we need to manually right-justify it within the display
+    if(itoa_result[1] == 0){ //1 digit number
+      displayChar(3,itoa_result[0],false);
+    }else if(itoa_result[2] == 0){ //2 digit number
+      displayChar(2,itoa_result[0],false);
+      displayChar(3,itoa_result[1],false);
+    }else{  //3 digit number
+      displayChar(1,itoa_result[0],false);
+      displayChar(2,itoa_result[1],false);
+      displayChar(3,itoa_result[2],false);
+    }
 
-  //bit 7 is the 'give up' button
-  if(bitRead(gameByteA,7)){
-    //show the player what the answer is until they press a button
-    while(!getButtons()){
-      setButtons(gameByteB);
-    }
-    displayString("Good");
-    delay(500);
-    displayString("Try!");
-    delay(500);
-    clearCube();
-    gameByteA = 0;
-    if(gameMode == 0b00001000){
-      gameByteB = wimpRandom();
-    }else{
-      gameByteB = random(0,128);
-    }
-  }
+    //hackedy hack
+    if(base == 0) displayChar(0,'a');
 
-  //is the guess correct?
-  if(gameByteA == gameByteB){
-    if(gameMode == 0b00001000) displayString("Okay");
-    else displayString("Good");
-    delay(500);
-    displayString("Job!");
-    delay(500);
-    clearCube();
-    gameByteA = 0;
-    if(gameMode == 0b00001000){
-      gameByteB = wimpRandom();
-    }else{
-      gameByteB = random(0,128);
+    while(true){
+      //track if the buttons change
+      byte oldState = gameByteA;
+      gameByteA = gameByteA ^= getButtons();
+      //if they do, wait to debounce
+      if(gameByteA != oldState){
+        delay(debounceTime);
+      }
+      //display the gurrent state of the player's guess
+      setButtons(gameByteA);
+    
+      //input 255 to give up
+      if(gameByteA == 255){
+        if(gameByteB != 255){
+          //show the player what the answer is until they press a button
+          while(!getButtons()){
+            setButtons(gameByteB);
+          }
+          displayString("Good");
+          delay(500);
+          displayString("Try!");
+          delay(500);
+          clearCube();
+          gameByteA = 0;
+          break;
+        }
+      }
+    
+      //is the guess correct?
+      if(gameByteA == gameByteB){
+        displayString("Good");
+        delay(500);
+        displayString("Job!");
+        delay(500);
+        clearCube();
+        gameByteA = 0;
+        break;
+      }
     }
   }
+  randomSeed(micros());
 }
 
 //return a random alphanumeric (not symbol) character
@@ -202,6 +207,24 @@ char wimpRandom(){
       break;
     case 2:
       return random(97,123);
+      break;
+  }
+}
+
+//return a random non-printing or symbol character
+char expertRandom(){
+  switch(random(0,4)){
+    case 0:
+      return random(0,48);
+      break;
+    case 1:
+      return random(58,65);
+      break;
+    case 2:
+      return random(91,97);
+      break;
+    case 3:
+      return random(123,128);
       break;
   }
 }
