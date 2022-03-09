@@ -48,6 +48,10 @@ byte frameCube[10][6];
 //tracks the current frame
 int currentFrame = 0;
 
+//tracks how long it's been since each button was pressed
+int debounceArray[4] = {debounceTime,debounceTime,debounceTime,debounceTime};
+
+//tracks how long it takes you to complete the game
 unsigned long startTime;
 
 void setup(){
@@ -324,14 +328,7 @@ void annihilateMode(){
     if(base == 0) displayChar(0,'a');
 
     while(true){
-      //track if the buttons change
-      byte oldState = gameByteA;
-      gameByteA = gameByteA ^= getButtons();
-      //if they do, wait to debounce
-      if(gameByteA != oldState){
-        delay(debounceTime);
-      }
-      //display the gurrent state of the player's guess
+      updateButtons();
       setButtons(gameByteA);
     
       //input 255 to give up
@@ -473,6 +470,12 @@ ISR(TIMER1_COMPA_vect){
   DDRB = frameCube[currentFrame][3];
   DDRC = frameCube[currentFrame][4];
   DDRD = frameCube[currentFrame][5];
+
+  //debounce buttons
+  for(int b=0; b<4;b++){
+    
+  }
+  
 }
 
 //sets the frame cube to an empty state, I.E. a totally blank display
@@ -515,6 +518,7 @@ void clearCube(){
   //frameCube[9][0] ^= 0b00001000;
 }
 
+//returns a byte reflecting the current state of the buttons
 byte getButtons(bool ignoreSwitch){
   byte buttonValue = 0;
   if(!digitalRead(button_input_pin_bit0)) buttonValue |= (1<<0);
@@ -525,10 +529,35 @@ byte getButtons(bool ignoreSwitch){
   return buttonValue;
 }
 
+//sets gameByteA to reflect the user's input
+byte updateButtons(){
+  byte buttonValue = 0;
+  if(!digitalRead(button_input_pin_bit0) && debounceArray[0] == debounceTime){
+    buttonValue |= (1<<0);
+    debounceArray[0] = 0;
+  }
+  if(!digitalRead(button_input_pin_bit1) && debounceArray[1] == debounceTime){
+    buttonValue |= (1<<1);
+    debounceArray[1] = 0;
+  }
+  if(!digitalRead(button_input_pin_bit2) && debounceArray[2] == debounceTime){
+    buttonValue |= (1<<2);
+    debounceArray[2] = 0;
+  }
+  if(!digitalRead(button_input_pin_bit3) && debounceArray[3] == debounceTime){
+    buttonValue |= (1<<3);
+    debounceArray[0] = 0;
+  }
+  if(digitalRead(nibbleSwitchPin)) buttonValue = buttonValue << 4;
+  gameByteA = gameByteA ^= buttonValue;
+  for(int b=0; b<4; b++){
+    debounceArray[b]++;
+  }
+}
+
 //sets the button lights to the value in the nibble of buttonValue-
 // -that the switch is set to.
 void setButtons(byte buttonStates, bool ignoreSwitch){
-  
   if(digitalRead(nibbleSwitchPin) & !ignoreSwitch) buttonStates = buttonStates >> 4;
   //                to bit v                        v from bit  
   bitWrite(frameCube[9][2],0,!bitRead(buttonStates, 3));//b1, set D0 low
