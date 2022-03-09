@@ -46,7 +46,7 @@ byte gameByteB = 0;
 byte frameCube[10][6];
 
 
-const byte asciiSegs[188] = {
+const byte asciiSegs[188] PROGMEM = {
                            0b00001100, 0b00000001, //!
                            0b01000000, 0b00100000, //"
                            0b01110010, 0b10100100, //#
@@ -821,6 +821,6 @@ void displayChar(byte digit, char dChar, bool pretty){
       displayString(" DEL");
       break;
     default:
-      setSegments(digit,asciiSegs[dChar*2-66],asciiSegs[dChar*2-65]);
+      setSegments(digit,pgm_read_byte_near(asciiSegs + (dChar*2-66)),pgm_read_byte_near(asciiSegs + (dChar*2-65)));
   }
 }
