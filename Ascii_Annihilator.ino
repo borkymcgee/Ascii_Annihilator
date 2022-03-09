@@ -1,3 +1,4 @@
+#include <avr/power.h>
 void displayChar(byte digit, char dChar, bool pretty = true);
 void showAscii(bool nonPrinting = false);
 void setButtons(byte buttonStates, bool ignoreSwitch = false);
@@ -47,8 +48,22 @@ byte frameCube[10][6];
 //tracks the current frame
 int currentFrame = 0;
 
+unsigned long startTime;
+
 void setup(){
   randomSeed(analogRead(A0)+analogRead(A1)+analogRead(A2)+analogRead(A3));
+
+  //penny pinch about power consumption. compared to the LEDs, the difference is negligible
+  // disable ADC
+//  ADCSRA = 0;
+//  power_adc_disable(); // ADC converter
+  power_spi_disable(); // SPI
+  power_usart0_disable();// Serial (USART)
+//  power_timer0_disable();// Timer 0
+//  power_timer1_disable();// Timer 1
+  power_timer2_disable();// Timer 2
+  power_twi_disable(); // TWI (I2C)
+  
   //set up timers - for updating display
   timerSetup();
   //initialize frameCube to be empty
@@ -69,13 +84,16 @@ void setup(){
   PORTC = 0b00111111;
   
   clearCube();
-  //annihilateMode();
-  setSegments(0,0xFF,0xFF);
-  setSegments(1,0xFF,0xFF);
-  setSegments(2,0xFF,0xFF);
-  setSegments(3,0xFF,0xFF);
-  setButtons(0xFF);
+
+  startTime = millis();
+  annihilateMode();
 }
+
+//void loop(){
+//  displayTime(millis());
+//  delay(100);
+//  }
+
 
 //sets up the guesses for the game
 //if describe is true, also display the gameMode selected
@@ -125,6 +143,7 @@ void setupGuesses(bool describe){
   }
   if(describe) delay(500);  
 }
+
 
 //fill the guess arrays with all options, in order, except for ascii
 //ascii has all the alphanumerics moved to the back to allow for beginner and expert modes
@@ -244,7 +263,10 @@ void annihilateMode(){
     displayString(" YOU");
     delay(500);
     displayString("WON!");
+    delay(500);
+    displayTime(millis()-startTime);
     delay(3000);  //bask in the glory
+    startTime = millis();
 
     //reset guess shit
     setupGuesses(false);
@@ -423,6 +445,16 @@ void timerSetup(){
   OCR1A = 64;
   TCNT1 = 0;
   sei();
+}
+
+void displayTime(unsigned long tim){
+  int minutes = (tim/1000)/60;
+  int seconds = (tim/1000)%60;
+  displayChar(0,(minutes/10)+48);
+  displayChar(1,(minutes%10)+48);
+  displayChar(4,':');
+  displayChar(2,(seconds/10)+48);
+  displayChar(3,(seconds%10)+48);
 }
 
 //update display asynchronously
