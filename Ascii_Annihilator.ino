@@ -699,13 +699,12 @@ void setSegments(byte digit, byte segA, byte segB){
 }
 
 //display the given 4-character ASCII string on the display
+//if string contains less than 4 characters, right-justify it
 void displayString(const char* dString){
-  displayChar(0,dString[0]);
-  displayChar(1,dString[1]);
-  displayChar(2,dString[2]);
-  displayChar(3,dString[3]);
+  for(int i=0; i<sizeof(dString); i++){
+    displayChar( i + (5-sizeof(dString)),dString[i]);
+  }
 }
-
 
 //display the specified char at the specified digit on the display
 //pretty makes the letters look pretty, but non-unique? also it makes the space a printing character
@@ -714,111 +713,111 @@ void displayChar(byte digit, char dChar, bool pretty){
   switch(dChar){
     //if asked to display a non-printing character, print its 3-letter abbreviation
     case 0:
-      displayString(" NUL");
+      displayString("NUL");
       break;
     case 1:
-      displayString(" SOH");
+      displayString("SOH");
       break;
     case 2:
-      displayString(" STX");
+      displayString("STX");
       break;
     case 3:
-      displayString(" ETX");
+      displayString("ETX");
       break;
     case 4:
-      displayString(" EOT");
+      displayString("EOT");
       break;
     case 5:
-      displayString(" ENQ");
+      displayString("ENQ");
       break;
     case 6:
-      displayString(" ACK");
+      displayString("ACK");
       break;
     case 7:
-      displayString(" BEL");
+      displayString("BEL");
       break;
     case 8:
-      displayString("  BS");
+      displayString("BS");
       break;
     case 9:
-      displayString(" TAB");
+      displayString("TAB");
       break;
     case 10:
-      displayString("  LF");
+      displayString("LF");
       break;
     case 11:
-      displayString("  VT");
+      displayString("VT");
       break;
     case 12:
-      displayString("  FF");
+      displayString("FF");
       break;
     case 13:
-      displayString("  CR");
+      displayString("CR");
       break;
     case 14:
-      displayString("  SO");
+      displayString("SO");
       break;
     case 15:
-      displayString("  SI");
+      displayString("SI");
       break;
     case 16:
-      displayString(" DLE");
+      displayString("DLE");
       break;
     case 17:
-      displayString(" DC1");
+      displayString("DC1");
       break;
     case 18:
-      displayString(" DC2");
+      displayString("DC2");
       break;
     case 19:
-      displayString(" DC3");
+      displayString("DC3");
       break;
     case 20:
-      displayString(" DC4");
+      displayString("DC4");
       break;
     case 21:
-      displayString(" NAK");
+      displayString("NAK");
       break;
     case 22:
-      displayString(" SYN");
+      displayString("SYN");
       break;
     case 23:
-      displayString(" ETB");
+      displayString("ETB");
       break;
     case 24:
-      displayString(" CAN");
+      displayString("CAN");
       break;
     case 25:
-      displayString("  EM");
+      displayString("EM");
       break;
     case 26:
-      displayString(" SUB");
+      displayString("SUB");
       break;
     case 27:
-      displayString(" ESC");
+      displayString("ESC");
       break;
     case 28:
-      displayString("  FS");
+      displayString("FS");
       break;
     case 29:
-      displayString("  GS");
+      displayString("GS");
       break;
     case 30:
-      displayString("  RS");
+      displayString("RS");
       break;
     case 31:
-      displayString("  US");
+      displayString("US");
       break;
     case ' ':
       if(pretty){
         //                   ABCDEFGCn   GHJKLMNDp
         setSegments(digit, 0b00000000, 0b00000000);
       }else{
-        displayString("  SP");
+        displayString("SP");
       }
       break;
     case 127:
-      displayString(" DEL");
+      displayString("DEL");
       break;
     default:
       setSegments(digit,pgm_read_byte_near(asciiSegs + (dChar*2-66)),pgm_read_byte_near(asciiSegs + (dChar*2-65)));
