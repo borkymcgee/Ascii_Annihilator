@@ -1,7 +1,7 @@
 #include <avr/power.h>
 void displayChar(byte digit, char dChar, bool pretty = true);
 void showAscii(bool nonPrinting = false);
-void setButtons(byte buttonStates, bool ignoreSwitch = false);
+void setButtons(byte currentGuesss, bool ignoreSwitch = false);
 byte getButtons(bool ignoreSwitch = false);
 void setupGuesses(bool describe = true);
 
@@ -11,10 +11,12 @@ const int button_input_pin_bit1 = A2;
 const int button_input_pin_bit2 = A1;
 const int button_input_pin_bit3 = A0;
 
+//arrays to hold the set of guesses and be shuffled by Knuth-Fisher-Yates
 int decGuesses[256];
 int hexGuesses[256];
 int asciiGuesses[128];
 
+//tracks progress through the guess array
 int decGuessIndex = 0;
 int hexGuessIndex = 0;
 int asciiGuessIndex = 0;
@@ -26,26 +28,28 @@ const int nibbleSwitchPin = 8;
 const int debounceTime = 200;
 
 //game mode, set by holding buttons on startup
-//none: main game mode, all ascii
-//bit 3: printing characters only - NOT IMPLEMENTED
-//bit 0: attract mode, cycle through all ascii
-//bit 3 and 2: look mode, tell you the char corresponding to whatever binary you put in
-//bit 1 and 0: table mode, let you browse
-//2 = cycle through ascii with the buttons
-//15 = only quiz on hard ascii
+//none: full, quiz on full ascii, hex, and dec
+//bit 3: include ascii in guesses
+//bit 2: include dec in guesses
+//bit 1: include hex in guesses
+//bit 0: wimp mode, only quiz hex up to 15, dec up to 15, and alphanumeric ascii only
+//all bits held: expert mode, quiz only on ascii, and only non-printing and symbols
 byte gameMode = 0;
 
-//whether to quiz on numbers higher than 15
-bool beginnerMode = false;
+//tracks whether wimp mode is enabled
+bool wimpMode = false;
 
-//variables used different ways for different modes
-byte gameByteA = 0;
-byte gameByteB = 0;
+//tracks the current state of the user's guess
+byte currentGuess = 0;
 
-//9 frames, 2 for each digit and one for button leds
+//holds the correct guess for the current round
+byte correctGuess = 0;
+
+//framebuffer for the display and button leads
+//has 9 frames, 2 for each digit and one for button leds
 byte frameCube[10][6];
 
-
+//ascii lookup table, stored in EEPROM to save space
 const byte asciiSegs[188] PROGMEM = {
                            0b00001100, 0b00000001, //!
                            0b01000000, 0b00100000, //"
@@ -150,63 +154,50 @@ int currentFrame = 0;
 //tracks how long it's been since each button was pressed
 int debounceArray[4] = {debounceTime,debounceTime,debounceTime,debounceTime};
 
-//tracks how long it takes you to complete the game
+//tracks when the current game was started to show the user their time
 unsigned long startTime;
 
 void setup(){
+
   randomSeed(analogRead(A0)+analogRead(A1)+analogRead(A2)+analogRead(A3));
 
   //penny pinch about power consumption. compared to the LEDs, the difference is negligible
-  // disable ADC
-//  ADCSRA = 0;
-//  power_adc_disable(); // ADC converter
   power_spi_disable(); // SPI
   power_usart0_disable();// Serial (USART)
-//  power_timer0_disable();// Timer 0
-//  power_timer1_disable();// Timer 1
   power_timer2_disable();// Timer 2
   power_twi_disable(); // TWI (I2C)
   
   //set up timers - for updating display
   timerSetup();
+  
   //initialize frameCube to be empty
   clearCube();
   
   //set game mode
-  delay(100);
-  gameMode = getButtons(true);
-  beginnerMode = bitRead(gameMode,0) && !(gameMode == 15);
-    
+  delay(100); //button pins seem to take a moment to get pulled low, so wait a sec
+  gameMode = getButtons(true);  //set game mode, ignore nibbleswitch
+  wimpMode = bitRead(gameMode,0) && !(gameMode == 15);//check if wimp mode is activated
+
+  //set up the guess tables, display the options selected
   setupGuesses(true);
   
   //if all the buttons are held down, we can't get a random seed, so spin wheels until they release some
   while(getButtons(true) == 15){}
-
-  PORTC = 0b00110000;
-  randomSeed(analogRead(A0)+analogRead(A1)+analogRead(A2)+analogRead(A3));
-  PORTC = 0b00111111;
   
+  PORTC = 0b00110000; //turn off pullup resistors
+  //any buttons not pressed should be floating, sum them to gobble up all their delicious randomness  
+  randomSeed(analogRead(A0)+analogRead(A1)+analogRead(A2)+analogRead(A3));
+  PORTC = 0b00111111; //turn 'em on again
+
+  //clear the screen
   clearCube();
 
+  //start the player timer
   startTime = millis();
+
+  //play the game!
   annihilateMode();
-  //clearCube();
 }
-
-//void loop(){
-//  for(int i=33;i<255;i++){
-//  displayChar(3,i);
-//  
-//    delay(500);
-//    clearCube();
-//  }
-////  for(int i=0;i<185;i++){
-////      setSegments(3,asciiSegs[i],asciiSegs[i+1]);
-////      
-////  delay(500);
-////  }
-//  }
-
 
 //sets up the guesses for the game
 //if describe is true, also display the gameMode selected
@@ -215,51 +206,56 @@ void setupGuesses(bool describe){
   //populate the guess arrays
   fillGuesses();
   
-  if(gameMode != 15){
-      if(describe && beginnerMode){
+  if(gameMode != 15){ //just display whether wimp mode is on
+      if(describe && wimpMode){
         displayString("WIMP");
         delay(500);
        }
     
   clearCube();
 
-    if(bitRead(gameMode,3)){
-      if(describe) displayChar(0,'a');
-      asciiGuessIndex = 127;
+    if(bitRead(gameMode,3)){  //ascii included
+      if(describe) displayChar(0,'a');  //display that it is
+      asciiGuessIndex = 127;  //initialize the guessIndex for full ascii
     }
-    if(bitRead(gameMode,2)){
-      if(describe) displayChar(1,'d');
-      if(beginnerMode) decGuessIndex = 15;
-      else decGuessIndex = 255;
+    if(bitRead(gameMode,2)){  //dec included
+      if(describe) displayChar(1,'d');  //display that it is
+      if(wimpMode) decGuessIndex = 15;  //only guess up to 15 if wimpy
+      else decGuessIndex = 255; //otherwise guess the whole thing
     }
-    if(bitRead(gameMode,1)){
-      if(describe) displayChar(2,'x');
-      if(beginnerMode) hexGuessIndex = 15;
-      else hexGuessIndex = 255;
+    if(bitRead(gameMode,1)){  //hex included
+      if(describe) displayChar(2,'x');  //display that it is
+      if(wimpMode) hexGuessIndex = 15;  //only guess up to F if wimpy
+      else hexGuessIndex = 255; //otherwise guess the whole thing
     }
-    if(gameMode < 2){
+    if(gameMode < 2){ //all included
       if(describe) displayString("full");
-      if(beginnerMode){
+      if(wimpMode){ //set for wimp mode
         decGuessIndex = 15;
         hexGuessIndex = 15;
-      }else{
+      }else{  //set for normal guess
         decGuessIndex = 255;
         hexGuessIndex = 255;
       }
+      //ascii wimp mode is set by the population of the guess array, not
+      //the starting guessIndex, so unless it's exprt, make it 127
       asciiGuessIndex = 127;
     }
-  }else{
-    if(describe) displayString("XPRT");
-    if(describe) delay(500);
-    if(describe) displayString("mode");
-    asciiGuessIndex = 66;
+  }else{  //expert mode set! display and set ascii for NP and symbols only
+    if(describe){
+      displayString("XPRT");
+      delay(500);
+      displayString("mode");
+    }
+    asciiGuessIndex = 66; //symbols only
   }
   if(describe) delay(500);  
 }
 
 
 //fill the guess arrays with all options, in order, except for ascii
-//ascii has all the alphanumerics moved to the back to allow for beginner and expert modes
+//ascii has all the alphanumerics moved to the back to allow for wimp and expert modes
+//to be easily set by only using a portion of the array
 void fillGuesses(){
 
   //fill dec and hex
@@ -293,16 +289,18 @@ void fillGuesses(){
 
 
 //gets a unique guess from the respective list using Knuth-Fisher-Yates
+//KFY operates by starting the index at the end, swapping the index for a
+//random position, and then returning that position and decrementing the index
 //if complete, return -1
 //base 10 = dec
 //base 16 = hex
 //base 128 = ascii
 byte getGuess(int base){
-  byte newGuess;
-  int newGuessIndex;
+  byte newGuess;  //the new guess to get swapped when we return the current
+  int newGuessIndex;  //the initial index of that guess
   switch(base){
     case 128:  //ascii
-      //if beginner mode
+      //if wimp mode
       if(bitRead(gameMode,0) && gameMode != 15){
         //quit if ascii is already done
         if(asciiGuessIndex == 66) return -1;
@@ -321,6 +319,7 @@ byte getGuess(int base){
       //replace it with the one at [base]GuessIndex
       asciiGuesses[newGuessIndex] = asciiGuesses[asciiGuessIndex];
 
+      //decrement index for next guess
       asciiGuessIndex--;
 
       return newGuess;
@@ -357,8 +356,8 @@ byte getGuess(int base){
 }
 
 //main game
-//goal is stored in gameByteB
-//buttons being pressed are stored in gameByteA
+//goal is stored in correctGuess
+//buttons being pressed are stored in currentGuess
 void annihilateMode(){
   //stores what base the current guess is in
   //0=ascii
@@ -372,16 +371,16 @@ void annihilateMode(){
   while(true){
 
   //check for win state
-  if((hexGuessIndex+decGuessIndex+asciiGuessIndex == 0) || (beginnerMode && asciiGuessIndex == 66)){
-    displayString(" YOU");
+  if((hexGuessIndex+decGuessIndex+asciiGuessIndex == 0) || (wimpMode && asciiGuessIndex == 66)){
+    displayString("YOU");
     delay(500);
     displayString("WON!");
     delay(500);
-    displayTime(millis()-startTime);
+    displayTime(millis()-startTime);  //display time in seconds
     delay(3000);  //bask in the glory
-    startTime = millis();
+    startTime = millis(); //reset timer
 
-    //reset guess shit
+    //reset guess stuff
     setupGuesses(false);
   }
   
@@ -403,25 +402,27 @@ void annihilateMode(){
     //print a leading char to indicate the base requested,
     //then convert the guess to the appropriate string to display it
     if(base == 1){  //decimal
-      gameByteB = getGuess(10);
+      correctGuess = getGuess(10);
       displayChar(0,'d');
-      itoa(gameByteB,itoa_result,10);
+      itoa(correctGuess,itoa_result,10);
     }else if(base == 2){  //hex
-      gameByteB = getGuess(16);
+      correctGuess = getGuess(16);
       displayChar(0,'x');
-      itoa(gameByteB,itoa_result,16);
-      for (auto & c: itoa_result) c = toupper(c);
+      itoa(correctGuess,itoa_result,16);
+      for (auto & c: itoa_result) c = toupper(c); //hex looks prettier in CAPS
     }else{  //ascii
-      gameByteB = getGuess(128);
+      correctGuess = getGuess(128);
       displayChar(0,'a');
       //no conversion neccesary, just plop the guess in
-      itoa_result[0] = gameByteB;
+      itoa_result[0] = correctGuess;
   
       //manually terminate the string early
       itoa_result[1] = 0;
     }
-  
-    //itoa has no leading spaces, and the length depends on the number of digits it outputs, so we need to manually right-justify it within the display
+
+    //TODO this shouldn't be needed, just plop the string into displayString
+    //itoa has no leading spaces, and the length depends on the number of 
+    //digits it outputs, so we need to manually right-justify it within the display
     if(itoa_result[1] == 0){ //1 digit number
       displayChar(3,itoa_result[0],false);
     }else if(itoa_result[2] == 0){ //2 digit number
@@ -435,16 +436,18 @@ void annihilateMode(){
 
     //hackedy hack
     if(base == 0) displayChar(0,'a');
+    //TODO: ^figure out wtf this shit does^
 
-    while(true){
-      setButtons(gameByteA);
-    
+    while(true){  // wait for the player to get the answer right
+      setButtons(currentGuess); //show the current guess on the buttons
+
       //input 255 to give up
-      if(gameByteA == 255){
-        if(gameByteB != 255){
+      if(currentGuess == 255){
+        if(correctGuess != 255){  //if it IS 255, it's just a correct guess
           //show the player what the answer is until they press a button
+          //TODO: this is broken, it doesn't wait rn
           while(!getButtons()){
-            setButtons(gameByteB);
+            setButtons(correctGuess);
           }
           displayString("Good");
           delay(500);
@@ -452,8 +455,8 @@ void annihilateMode(){
           delay(500);
           //test if guess was the last one in the set
           switch(base){
-            case 0:
-              //if beginner mode and 66 or not and 0
+            case 0: //ascii
+              //if (wimp mode and 66) or not and 0, ascii done
               if((bitRead(gameMode,0) && gameMode != 15 && asciiGuessIndex == 66) || asciiGuessIndex == 0){
                 displayString("asci");
                 delay(500);
@@ -461,17 +464,17 @@ void annihilateMode(){
                 delay(500);
               }
               break;
-            case 1:
+            case 1: //dec
               if(decGuessIndex == 0){
-                displayString(" dec");
+                displayString("dec");
                 delay(500);
                 displayString("DONE");
                 delay(500);
               }
               break;
-            case 2:
+            case 2: //hex
               if(hexGuessIndex == 0){
-                displayString(" hex");
+                displayString("hex");
                 delay(500);
                 displayString("DONE");
                 delay(500);
@@ -479,20 +482,20 @@ void annihilateMode(){
               break;
           }
           clearCube();
-          gameByteA = 0;
+          currentGuess = 0;
           break;
         }
       }
     
       //is the guess correct?
-      if(gameByteA == gameByteB){
+      if(currentGuess == correctGuess){
 
         //if it was 0
-        if(gameByteB == 0){
+        if(correctGuess == 0){
           delay(3000);  //pause for comedic effect
-          displayString(" JK ");
+          displayString("JK ");
           delay(500);
-        }else if(gameByteB == 69){
+        }else if(correctGuess == 69){ //nice
           displayString("nice");
           delay(500);
         }
@@ -500,13 +503,11 @@ void annihilateMode(){
         delay(500);
         displayString("Job!");
         delay(500);
-//        clearCube();
-//        displayChar(3,gameByteA);
-//        delay(500);
         
         //test if guess was the last one in the set
+        //TODO: why do we test twice?
         switch(base){
-          case 0:
+          case 0: //ascii
             //if beginner mode and 66 or not and 0
             if((bitRead(gameMode,0) && gameMode != 15 && asciiGuessIndex == 66) || asciiGuessIndex == 0){
               displayString("asci");
@@ -515,17 +516,17 @@ void annihilateMode(){
               delay(500);
             }
             break;
-          case 1:
+          case 1: //dec
             if(decGuessIndex == 0){
-              displayString(" dec");
+              displayString("dec");
               delay(500);
               displayString("DONE");
               delay(500);
             }
             break;
-          case 2:
+          case 2: //hex
             if(hexGuessIndex == 0){
-              displayString(" hex");
+              displayString("hex");
               delay(500);
               displayString("DONE");
               delay(500);
@@ -533,36 +534,44 @@ void annihilateMode(){
             break;
         }
         clearCube();
-        gameByteA = 0;
+        currentGuess = 0;
         break;
       }
     }
   }
+  //reseed random for extra randomness
+  //the result of this is determined purely by how long it took the player to
+  //guess correctly, so it's VERY random
   randomSeed(micros());
 }
 
-//sets up timers used for display and button LED driving (Latter is planned)
+//TODO: figure this shit out again so i can describe it lol
+//sets up timers used for updating the display and button LEDs
 void timerSetup(){
-  cli();
+  cli();  //turn off timers while we set 'em up
   TCCR1A = 0;
   TCCR1B = 0b00000100;
   TIMSK1 = 0b00000010;
   OCR1A = 64;
   TCNT1 = 0;
-  sei();
+  sei();  //turn timers back on
 }
 
+//displays the given time on the display
+//tim is a number of milliseconds
 void displayTime(unsigned long tim){
-  int minutes = (tim/1000)/60;
-  int seconds = (tim/1000)%60;
-  displayChar(0,(minutes/10)+48);
+  int minutes = (tim/1000)/60;  //calculate minutes from tim
+  int seconds = (tim/1000)%60;  //calculate seconds from tim
+
+  //convert to ascii and display
+  displayChar(0,(minutes/10)+48); 
   displayChar(1,(minutes%10)+48);
   displayChar(4,':');
   displayChar(2,(seconds/10)+48);
   displayChar(3,(seconds%10)+48);
 }
 
-//update display asynchronously
+//update display and buttons asynchronously
 ISR(TIMER1_COMPA_vect){
   //reset timer
   TCNT1 = 0;
@@ -620,22 +629,23 @@ void clearCube(){
   frameCube[3][4] |= 0b00010000; //b2 at 2B, C4
   frameCube[8][4] |= 0b00100000; //b3 at DN, C5
   frameCube[6][3] |= 0b00001000; //b4 at 4A, B3
-  
-  //frameCube[9][0] ^= 0b00001000;
 }
 
 //returns a byte reflecting the current state of the buttons
 byte getButtons(bool ignoreSwitch){
   byte buttonValue = 0;
+  //or combine each pin into the buttonvalue
   if(!digitalRead(button_input_pin_bit0)) buttonValue |= (1<<0);
   if(!digitalRead(button_input_pin_bit1)) buttonValue |= (1<<1);
   if(!digitalRead(button_input_pin_bit2)) buttonValue |= (1<<2);
   if(!digitalRead(button_input_pin_bit3)) buttonValue |= (1<<3);
+  //if nibbleswitch is high, shift all bits up by 4
   if(digitalRead(nibbleSwitchPin) & !ignoreSwitch) buttonValue = buttonValue << 4;
   return buttonValue;
 }
 
-//sets gameByteA to reflect the user's input
+//sets currentGuess to reflect the user's input on the buttons
+//waits the # of millis specified in debounceArray before being able to update a button
 byte updateButtons(){
   byte buttonValue = 0;
   if(!digitalRead(button_input_pin_bit0) && debounceArray[0] == debounceTime){
@@ -655,21 +665,21 @@ byte updateButtons(){
     debounceArray[3] = 0;
   }
   if(digitalRead(nibbleSwitchPin)) buttonValue = buttonValue << 4;
-  gameByteA = gameByteA ^= buttonValue;
+  currentGuess = currentGuess ^= buttonValue;
   for(int b=0; b<4; b++){
     if(debounceArray[b] < debounceTime) debounceArray[b]++;
   }
 }
 
-//sets the button lights to the value in the nibble of buttonValue-
-// -that the switch is set to.
-void setButtons(byte buttonStates, bool ignoreSwitch){
-  if(digitalRead(nibbleSwitchPin) & !ignoreSwitch) buttonStates = buttonStates >> 4;
+//sets the button lights to the value in the nibble of buttonValue that the
+//switch is set to.
+void setButtons(byte currentGuesss, bool ignoreSwitch){
+  if(digitalRead(nibbleSwitchPin) & !ignoreSwitch) currentGuesss = currentGuesss >> 4;
   //                to bit v                        v from bit  
-  bitWrite(frameCube[9][2],0,!bitRead(buttonStates, 3));//b1, set D0 low
-  bitWrite(frameCube[9][1],4,!bitRead(buttonStates, 2));//b2, set C4 low
-  bitWrite(frameCube[9][1],5,!bitRead(buttonStates, 1));//b3, set C5 low
-  bitWrite(frameCube[9][0],3,!bitRead(buttonStates, 0));//b4, set B3 low 
+  bitWrite(frameCube[9][2],0,!bitRead(currentGuesss, 3));//b1, set D0 low
+  bitWrite(frameCube[9][1],4,!bitRead(currentGuesss, 2));//b2, set C4 low
+  bitWrite(frameCube[9][1],5,!bitRead(currentGuesss, 1));//b3, set C5 low
+  bitWrite(frameCube[9][0],3,!bitRead(currentGuesss, 0));//b4, set B3 low 
 }
 
 //sets the specified segments on for the specified subdigit
@@ -707,9 +717,8 @@ void displayString(const char* dString){
 }
 
 //display the specified char at the specified digit on the display
-//pretty makes the letters look pretty, but non-unique? also it makes the space a printing character
+//pretty makes space act as a printed blank char and not "SP"
 void displayChar(byte digit, char dChar, bool pretty){
-  
   switch(dChar){
     //if asked to display a non-printing character, print its 3-letter abbreviation
     case 0:
@@ -808,7 +817,7 @@ void displayChar(byte digit, char dChar, bool pretty){
     case 31:
       displayString("US");
       break;
-    case ' ':
+    case ' ': //sometimes this is ' ', sometimes it's 'SP'
       if(pretty){
         //                   ABCDEFGCn   GHJKLMNDp
         setSegments(digit, 0b00000000, 0b00000000);
@@ -819,7 +828,7 @@ void displayChar(byte digit, char dChar, bool pretty){
     case 127:
       displayString("DEL");
       break;
-    default:
+    default:  //printing char, pull it from the lookup table
       setSegments(digit,pgm_read_byte_near(asciiSegs + (dChar*2-66)),pgm_read_byte_near(asciiSegs + (dChar*2-65)));
   }
 }
