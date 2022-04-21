@@ -49,6 +49,9 @@ byte correctGuess = 0;
 //has 9 frames, 2 for each digit and one for button leds
 byte frameCube[10][6];
 
+//enable alternate wimp mode (in wimp mode, switch nibble switch HIGH to quiz on only the upper nibble)
+bool aWimp = false;
+
 //ascii display lookup table, stored in EEPROM to save space
 const byte asciiSegs[188] PROGMEM = {
                            0b00001100, 0b00000001, //!
@@ -334,6 +337,9 @@ byte getGuess(int base){
       //decrement index for next guess
       asciiGuessIndex--;
 
+      //if nibbleswitch is high and in wimp mode and alternate wimp mode is enabled, shift all bits up by 4
+      if(digitalRead(nibbleSwitchPin) && bitRead(gameMode,0) && gameMode != 15 && aWimp) newGuess = newGuess << 4;
+      
       return newGuess;
       break;
     case 10:
@@ -348,6 +354,10 @@ byte getGuess(int base){
       decGuesses[newGuessIndex] = decGuesses[decGuessIndex];
 
       decGuessIndex--;
+
+      //if nibbleswitch is high and in wimp mode and alternate wimp mode is enabled, shift all bits up by 4
+      if(digitalRead(nibbleSwitchPin) && bitRead(gameMode,0) && gameMode != 15 && aWimp) newGuess = newGuess << 4;
+            
       return newGuess;
       break;
     case 16:
@@ -362,6 +372,10 @@ byte getGuess(int base){
       hexGuesses[newGuessIndex] = hexGuesses[hexGuessIndex];
 
       hexGuessIndex--;
+
+      //if nibbleswitch is high and in wimp mode and alternate wimp mode is enabled, shift all bits up by 4
+      if(digitalRead(nibbleSwitchPin) && bitRead(gameMode,0) && gameMode != 15 && aWimp) newGuess = newGuess << 4;
+      
       return newGuess;
       break;
   }
