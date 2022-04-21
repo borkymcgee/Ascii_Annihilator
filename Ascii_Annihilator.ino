@@ -49,7 +49,7 @@ byte correctGuess = 0;
 //has 9 frames, 2 for each digit and one for button leds
 byte frameCube[10][6];
 
-//ascii lookup table, stored in EEPROM to save space
+//ascii display lookup table, stored in EEPROM to save space
 const byte asciiSegs[188] PROGMEM = {
                            0b00001100, 0b00000001, //!
                            0b01000000, 0b00100000, //"
@@ -110,7 +110,7 @@ const byte asciiSegs[188] PROGMEM = {
                            0b00000000, 0b01010100, //Y
                            0b10010000, 0b00010010, //Z
                            0b10010010, 0b01000010, //[
-                           0b00000000, 0b01001000, //\\
+                           0b00000000, 0b01001000, //backslash
                            0b10010000, 0b10011000, //]
                            0b01000000, 0b00010000, //^
                            0b00010000, 0b00000000, //_
@@ -172,6 +172,8 @@ void setup(){
   
   //initialize frameCube to be empty
   clearCube();
+
+//  testCode();
   
   //set game mode
   delay(100); //button pins seem to take a moment to get pulled low, so wait a sec
@@ -197,6 +199,16 @@ void setup(){
 
   //play the game!
   annihilateMode();
+}
+
+void testCode(){
+  for(char g='!'; g<128; g++){
+      displayChar(1,g);
+    //displayString("!!!!");
+    //displayChar(0,'!');
+    delay(500);
+    clearCube();
+  }
 }
 
 //sets up the guesses for the game
@@ -436,7 +448,6 @@ void annihilateMode(){
 
     //hackedy hack
     if(base == 0) displayChar(0,'a');
-    //TODO: ^figure out wtf this shit does^
 
     while(true){  // wait for the player to get the answer right
       setButtons(currentGuess); //show the current guess on the buttons
@@ -711,8 +722,9 @@ void setSegments(byte digit, byte segA, byte segB){
 //display the given 4-character ASCII string on the display
 //if string contains less than 4 characters, right-justify it
 void displayString(const char* dString){
-  for(int i=0; i<sizeof(dString); i++){
-    displayChar( i + (5-sizeof(dString)),dString[i]);
+  clearCube();
+  for(int i=0; i<strlen(dString); i++){
+    displayChar( i + (4-strlen(dString)),dString[i]);
   }
 }
 
