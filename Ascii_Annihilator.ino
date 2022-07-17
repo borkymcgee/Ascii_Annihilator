@@ -1,3 +1,22 @@
+/**************************************************************************
+* Ascii Annihilator, Copyright (C) 2022 Juno Presken
+* E-mail: juno.presken+asciiannihilator@protonmail.com
+*      
+* This program is free software: you can redistribute it and/or modify it
+* under the terms of the GNU General Public License as published by the
+* Free Software Foundation, either version 3 of the License, or (at your
+* option) any later version.
+
+* This program is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+* Public License for more details.
+
+* You should have received a copy of the GNU General Public License
+* along with this program. If not, see <https://www.gnu.org/licenses/>. 
+* 
+**************************************************************************/
+
 #include <avr/power.h>
 void displayChar(byte digit, char dChar, bool pretty = true);
 void showAscii(bool nonPrinting = false);
@@ -113,7 +132,7 @@ const byte asciiSegs[188] PROGMEM = {
                            0b00000000, 0b01010100, //Y
                            0b10010000, 0b00010010, //Z
                            0b10010010, 0b01000010, //[
-                           0b00000000, 0b01001000, //backslash
+                           0b00000000, 0b01001000, //backslash. this fucker got escaped and it took me like a million years to find
                            0b10010000, 0b10011000, //]
                            0b01000000, 0b00010000, //^
                            0b00010000, 0b00000000, //_
