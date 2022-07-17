@@ -2,7 +2,7 @@ Hardware modding instructions:
 
 In this directory you will find two images: front.png and back.png. These correspond with the front and back of the binary blaster, and show the mods required on each side. It is easiest to modify the PCB before constructing the binary blaster, but one can also modify an already constructed binary blaster.
 
-	-If modding an existing binary blaster, desolder and remove the 7-segment displays, the buzzer, the sound switch, and (optionally) the battery connectors. The 7-segments and the buzzer won't be needed, but try not to break the sound switch or the battery connectors
+	-If moddin g an existing binary blaster, desolder and remove the 7-segment displays, the buzzer, the sound switch, and (optionally) the battery connectors. The 7-segments and the buzzer won't be needed, but try not to break the sound switch or the battery connectors
 
 	-Use something hard and sharp to cut through the traces along the red lines in the diagram. An exacto knife or box cutter works well for this, although a thumbtack will work in a pinch. Be careful not to cut any traces not marked in red, and make sure the trace is completely cut, potentially using a continuity tester to check.
 
@@ -16,8 +16,22 @@ In this directory you will find two images: front.png and back.png. These corres
 
 	-Solder the rest of the pins on the atmega328
 
-	-Bend the pins of the alphanumeric display outward in the pattern shown by alphabend.png [TODO].
+	-Bend the pins of the alphanumeric display outward in the pattern shown by alphabend.png [TODO: generate and add this image].
 
-	-Solder the alphanumeric display to the pins as shown in front.jpg
+	-Solder the alphanumeric display to the pins as shown in front.jpg [TODO: add this to the image]
 
 	-(Optional) Solder the battery holders to the opposite side of the board as that intended. This is optional but makes holding and playing the game MUCH more comfortable.
+
+	-If modding a new Binary Blaster kit, solder the remaining components to the board as usual, excluding the 7-segment displays, buzzer, and buzzer switch.
+
+	-Pop some AA batteries in that bad boy.
+
+	-Flash new firmware using the FTDI Basic or pin-compatible usb-to-uart adapter.
+
+	-Turn the toy on, and ensure that the display shows "full"
+
+	-DO NOT CONTINUE UNLESS THE DISPLAY SHOWS "full" ON BOOT. IGNORING THIS WARNING WILL BREAK SHIT.
+	
+	-Pop the batteries out again.
+
+	-Solder the sound switch where the buzzer used to go, bending the pins so that the middle pin gets soldered to the upper pad of the buzzer and one of the other pins gets soldered to the lower pad.

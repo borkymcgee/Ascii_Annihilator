@@ -10,9 +10,9 @@ warning explanation: The binary blaster code is configured to use D6 as the buzz
 
 solution: build all but the nibble switch, upload the new firmware and ensure that it displays the new startup sequence [TODO], and only THEN solder on the nibble switch
 
-###IMPORTANT WARNING###
+###IMPORTANT WARNING END###
 
-Note: at this time, sound is not available,  as removing the buzzer is necessary to simplify the hardware modifications
+Note: at this time, sound is not available, as removing the buzzer is necessary to simplify the hardware modifications
 
 Parts:
 -Binary Blaster kit [TODO: link]
@@ -22,7 +22,7 @@ Parts:
 
 Hardware Mods:
 
-Within the "Hardware" directory, you will find images of the top and bottom of the binary blaster's board, with traces to cut and jumpers to add marked, as well as instructions and [TODO] a step-by-step walkthrough of the mods necessary.
+Within the "Hardware" directory, you will find images of the top and bottom of the binary blaster's board, with traces to cut and jumpers to add marked, as well as instructions and [TODO: write walkthrough] a step-by-step walkthrough of the mods necessary.
 
 Software Mods:
 
