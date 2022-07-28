@@ -41,7 +41,7 @@ int hexGuessIndex = 0;
 int asciiGuessIndex = 0;
 
 //pin that the nibble select switch is connected to
-const int nibbleSwitchPin = 8;
+const int nibbleSwitchPin = 6;
 
 //how long in ms to wait to debounce button presses
 const int debounceTime = 200;
@@ -132,7 +132,7 @@ const byte asciiSegs[188] PROGMEM = {
                            0b00000000, 0b01010100, //Y
                            0b10010000, 0b00010010, //Z
                            0b10010010, 0b01000010, //[
-                           0b00000000, 0b01001000, //backslash. this fucker got escaped and it took me like a million years to find
+                           0b00000000, 0b01001000, //backslash. this @#!$er got escaped and it took me like a million years to find
                            0b10010000, 0b10011000, //]
                            0b01000000, 0b00010000, //^
                            0b00010000, 0b00000000, //_
