@@ -1,6 +1,8 @@
+# Ascii Annihilator #
+
 The Ascii Annihilator (or 'Asc Blaster') is a modification to sparkfun's popular "Binary Blaster" PTH soldering kit [TODO: put link]. The asc blaster replaces the 2-digit 7-segment display with a 4-digit 14-segment alphanumeric display, and allows the player to quiz themself on decimal- hexidecimal- and ascii-to-binary conversions.
 
-###IMPORTANT WARNING###
+## IMPORTANT WARNING ##
 
 DO NOT INSTALL THE NIBBLE SWITCH BEFORE UPLOADING THE NEW FIRMWARE
 
@@ -10,25 +12,23 @@ warning explanation: The binary blaster code is configured to use D6 as the buzz
 
 solution: build all but the nibble switch, upload the new firmware and ensure that it displays the new startup sequence [TODO], and only THEN solder on the nibble switch
 
-###IMPORTANT WARNING END###
-
 Note: at this time, sound is not available, as removing the buzzer is necessary to simplify the hardware modifications
 
-Parts:
+## Parts: ##
 -Binary Blaster kit [TODO: link]
 -14-segment alphanumeric display [TODO: link]
 -wire for jumpers
 -FTDI Basic for programming
 
-Hardware Mods:
+## Hardware Mods: ##
 
 Within the "Hardware" directory, you will find images of the top and bottom of the binary blaster's board, with traces to cut and jumpers to add marked, as well as instructions and [TODO: write walkthrough] a step-by-step walkthrough of the mods necessary.
 
-Software Mods:
+## Software Mods: ##
 
 Open Ascii_Annihilator.ino in the arduino IDE, and follow the instructions silkscreened on the back of the binary blaster to upload.
 
-How to Play:
+## How to Play: ##
 
 Upon boot, the Ascii Annihilator will display the mode selected, and begin quizzing the player on the corresponding set of numbers and characters.
 
