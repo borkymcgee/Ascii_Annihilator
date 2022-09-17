@@ -37,7 +37,9 @@ a - ascii
 d - decimal
 x - hexadecimal
 
-The Annihilator is capable of quizzing the player on hex and decimal from 0-255, and all of standard ascii, including non-printing characters. As the Binary Blaster (and thus the Ascii Annihilator) only has 4 buttons, the use of the 'nibble switch' to the bottom right of the display is used. an example follows:
+The Annihilator is capable of quizzing the player on hex and decimal from 0-255, and all of standard ascii, including non-printing characters. As the Binary Blaster (and thus the Ascii Annihilator) only has 4 buttons, the use of the 'nibble switch' to the bottom right of the display is used.
+
+### Example: ###
 
 display shows:
 x 7D
@@ -51,33 +53,51 @@ player must input:
 with nibble switch high:  0111
 with nibble switch low:   1101
 
+### Selecting game mode: ###
+
 The Ascii Annihilator allows the user to select between several modes by holding certain buttons on boot. the buttons are assigned as follows:
 
 -bit 3: ascii mode
+
 -bit 2: decimal mode
+
 -bit 1: hexadecimal mode
+
 -bit 0: wimp mode
 
 -all bits: expert mode
 
-Ascii mode: the player gets quizzed on all of ascii, including non-printing characters, symbols, numbers, and letters
+### Ascii mode ###
+the player gets quizzed on all of ascii, including non-printing characters, symbols, numbers, and letters
 
-Hex mode: the player gets quizzed on hexadecimal from 0-FF
+### Hex mode ### 
+the player gets quizzed on hexadecimal from 0-FF
 
-Dec mode: the player gets quizzed on decimal from 0-255
+### Dec mode ###
+the player gets quizzed on decimal from 0-255
 
-Wimp mode: ascii mode will only show letters and numbers, hex only 0-F, and dec only 0-15
+### Wimp mode ###
+ascii mode will only show letters and numbers, hex only 0-F, and dec only 0-15
 
-Expert mode: the player will only get quizzed on symbols and non-printing ascii characters
+### Expert mode ###
+the player will only get quizzed on symbols and non-printing ascii characters
 
 ascii, decimal, hexadecimal, and wimp modes can be combined in any way to be quizzed on all of the selected sets at once.
 
 ## About this mod ##
-  I've worked at sparkfun for around a year now (and been a fan much longeer), and one day as I was packaging up some binary blaster kits i became enchanted by the idea of them: a kit to not only teach a person basic soldering, to not only provide them with a fun game afterward, but to make that game itself a teaching tool for learning binary and hexidecimal! I bought one, put it together that day on my 15 minute break, and spent the next day or two just quizzing myself on my binary and ascii. 
-  After a little while, i started to get bored of just being able to quiz myself on 0-15 and 0-FF, and started to think about ways to increase the toy's replayability. Sparkfun had just started selling a 4 character alphanumeric display with a qwiic connector and interface, and after buying one and extracting the display from  it, set about integrating it into the binary blaster.
-  I decided from the get-go that there were a few design restrictions i'd put on myself: i wanted the code to all be under the GNU GPL, i wanted to make the modification as low-profile and robust as possible, and i wanted the new display itself to be the only new component needed.
-  There were quite a few hurdles to overcome, most significantly that to control the display, the lit buttons, and the nibble switch i needed to add, required a few more I/O pins than i had at my disposal. I ended up having to charlieplex the display and button LEDs together, as well as get rid of the buzzer to free enough pins to address everything. I also had to figure out how to use the existing traces on the pcb as much as possible to cut down on the complexity and messiness of the mod.
-  The next hurdle was programming. The original code for the binary blaster was all released under CC-BY-SA, which is incompatible with the GLPV3+ i wanted to use, so that meant completely rewriting the code to run the toy. Additionally, since i'd charlieplexed the display and buttons together, i couldn't use any preexisting code to run the display and had to implement it myself, taking inspiration from other typefaces i'd seen on 14 segment displays and tweaking them to enable me to display all of the standard ASCII charset. There were some other interesting challenges, like how using the buttons on boot vastly reduced the amount of randomness available to me, or the fun knuth-fisher-yates algorithm for shuffling the guess order.
-  Eventually i had it all done and working, and i've been having fun playing with the result ever since! 
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I've worked at sparkfun for around a year now (and been a fan much longeer), and one day as I was packaging up some binary blaster kits i became enchanted by the idea of them: a kit to not only teach a person basic soldering, to not only provide them with a fun game afterward, but to make that game itself a teaching tool for learning binary and hexidecimal! I bought one, put it together that day on my 15 minute break, and spent the next day or two just quizzing myself on my binary and ascii. 
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After a little while, i started to get bored of just being able to quiz myself on 0-15 and 0-F, and started to think about ways to increase the toy's replayability. Sparkfun had just started selling a 4 character alphanumeric display with a qwiic connector and interface, and after buying one and extracting the display from  it, set about integrating it into the binary blaster.
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I decided from the get-go that there were a few design restrictions i'd put on myself: i wanted the code to all be under the GNU GPL, i wanted to make the modification as low-profile and robust as possible, and i wanted the new display itself to be the only new component needed.
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There were quite a few hurdles to overcome, most significantly that to control the display, the lit buttons, and the nibble switch i needed to add, required a few more I/O pins than i had at my disposal. I ended up having to charlieplex the display and button LEDs together, as well as get rid of the buzzer to free enough pins to address everything. I also had to figure out how to use the existing traces on the pcb as much as possible to cut down on the complexity and messiness of the mod.
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The next hurdle was programming. The original code for the binary blaster was all released under CC-BY-SA, which is incompatible with the GLPV3+ i wanted to use, so that meant completely rewriting the code to run the toy. Additionally, since i'd charlieplexed the display and buttons together, i couldn't use any preexisting code to run the display and had to implement it myself, taking inspiration from other typefaces i'd seen on 14 segment displays and tweaking them to enable me to display all of the standard ASCII charset. There were some other interesting challenges, like how using the buttons on boot vastly reduced the amount of randomness available to me, or the fun knuth-fisher-yates algorithm for shuffling the guess order.
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eventually i had it all done and working, and i've been having fun playing with the result ever since! 
   
-  Another amusing note: apart from actually soldering the thing together, all the designing and programming for this project was performed on the hour-long bus commutes to-and-from work, balancing my laptop, the annihilator, and a multimeter on my lap. the development took around 2ish weeks, over which time i attracted quite a few curious or conerned glances from fellow bus partons! A discussion over lunch with [Pete Lewis](https://github.com/lewispg228), the designer of the original binary blaster, revealed that development on public transportation is a common theme with this project, with the original binary blaster having been largely coded on a flight to his honeymoon!
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Another amusing note: apart from actually soldering the thing together, all the designing and programming for this project was performed on the hour-long bus commutes to-and-from work, balancing my laptop, the annihilator, and a multimeter on my lap. the development took around 2ish weeks, over which time i attracted quite a few curious or conerned glances from fellow bus partons! A discussion over lunch with [Pete Lewis](https://github.com/lewispg228), the designer of the original binary blaster, revealed that development on public transportation is a common theme with this project, with the original binary blaster having been largely coded on a flight to his honeymoon!
+
+P.S. i've recently been eyeing Pete's other game-based soldering kit, the Simon Says, and thinking about how to mod that one for increased replayability. If you're interested in that, keep an eye on my github!
