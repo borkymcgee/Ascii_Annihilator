@@ -1,3 +1,4 @@
+![glamor_shot_small](https://user-images.githubusercontent.com/78439591/190876986-dc66f5b8-4b21-41d2-8fd3-9e7d38d229f8.jpg)
 # Ascii Annihilator #
 
 The Ascii Annihilator (or 'Asc Blaster') is a modification to [sparkfun's popular "Binary Blaster" PTH soldering kit](https://www.sparkfun.com/products/12037). The asc blaster replaces the 2-digit 7-segment display with a 4-digit 14-segment alphanumeric display, and allows the player to quiz themself on decimal- hexidecimal- and ascii-to-binary conversions.
