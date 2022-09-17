@@ -1,6 +1,6 @@
 /**************************************************************************
 * Ascii Annihilator, Copyright (C) 2022 Juno Presken
-* E-mail: juno.presken+asciiannihilator@protonmail.com
+* E-mail: juno.presken+github@protonmail.com
 *      
 * This program is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
