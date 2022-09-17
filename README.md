@@ -36,8 +36,11 @@ Open Ascii_Annihilator.ino in the arduino IDE, and follow the instructions silks
 Upon boot, the Ascii Annihilator will display the mode selected, and begin quizzing the player on the corresponding set of numbers and characters.
 
 the first digit of the display is used to show what type of character the player must convert to binary as follows:
+
 a - ascii
+
 d - decimal
+
 x - hexadecimal
 
 The Annihilator is capable of quizzing the player on hex and decimal from 0-255, and all of standard ascii, including non-printing characters. As the Binary Blaster (and thus the Ascii Annihilator) only has 4 buttons, the use of the 'nibble switch' to the bottom right of the display is used.
@@ -53,7 +56,9 @@ corresponding binary:
 01111101
 
 player must input:
+
 with nibble switch high:  0111
+
 with nibble switch low:   1101
 
 ### Selecting game mode: ###
