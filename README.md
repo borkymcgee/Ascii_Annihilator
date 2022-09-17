@@ -16,8 +16,11 @@ Note: at this time, sound is not available, as removing the buzzer is necessary 
 
 ## Parts: ##
 -[Binary Blaster kit](https://www.sparkfun.com/products/12037)
+
 -14-segment alphanumeric display [TODO: link]
+
 -wire for jumpers
+
 -FTDI Basic for programming
 
 ## Hardware Mods: ##
