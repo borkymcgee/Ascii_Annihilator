@@ -582,11 +582,11 @@ void annihilateMode(){
         break;
       }
     }
+    //reseed random for extra randomness
+    //the result of this is determined purely by how long it took the player to
+    //guess correctly, so it's VERY random
+    randomSeed(micros());
   }
-  //reseed random for extra randomness
-  //the result of this is determined purely by how long it took the player to
-  //guess correctly, so it's VERY random
-  randomSeed(micros());
 }
 
 //TODO: figure this shit out again so i can describe it lol
