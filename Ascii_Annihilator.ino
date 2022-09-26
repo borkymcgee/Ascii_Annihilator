@@ -645,7 +645,7 @@ void clearCube(){
   for(byte frame=0; frame < 10; frame++){
     frameCube[frame][0] = 0b10111001; //PORTB
     frameCube[frame][1] = 0b00111111; //PORTC
-    frameCube[frame][2] = 0b00111101; //PORTD
+    frameCube[frame][2] = 0b01111101; //PORTD
     frameCube[frame][3] = 0b11110110; //DDRB
     frameCube[frame][4] = 0b11000000; //DDRC
     frameCube[frame][5] = 0b11111110; //DDRD
