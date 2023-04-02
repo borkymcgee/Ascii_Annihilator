@@ -73,6 +73,7 @@ bool aWimp = false;
 
 //ascii display lookup table, stored in EEPROM to save space
 const byte asciiSegs[188] PROGMEM = {
+                           //abcdefg:   g2hjklmn.
                            0b00001100, 0b00000001, //!
                            0b01000000, 0b00100000, //"
                            0b01110010, 0b10100100, //#
@@ -123,7 +124,7 @@ const byte asciiSegs[188] PROGMEM = {
                            0b11001110, 0b10000000, //P
                            0b11111100, 0b00001000, //Q
                            0b11001110, 0b10001000, //R
-                           0b10110110, 0b10000000, //S
+                           0b10110000, 0b11000000, //S
                            0b10000000, 0b00100100, //T
                            0b01111100, 0b00000000, //U
                            0b00001100, 0b00010010, //V
