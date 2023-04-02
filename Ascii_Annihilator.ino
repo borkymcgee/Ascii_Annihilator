@@ -17,6 +17,7 @@
 * 
 **************************************************************************/
 
+#include <EEPROM.h>
 #include <avr/power.h>
 void displayChar(byte digit, char dChar, bool pretty = true);
 void showAscii(bool nonPrinting = false);
@@ -41,7 +42,7 @@ int hexGuessIndex = 0;
 int asciiGuessIndex = 0;
 
 //pin that the nibble select switch is connected to
-const int nibbleSwitchPin = 6;
+const int nibbleSwitchPin = 8;
 
 //how long in ms to wait to debounce button presses
 const int debounceTime = 200;
@@ -175,6 +176,7 @@ const byte asciiSegs[188] PROGMEM = {
 int currentFrame = 0;
 
 //tracks how long it's been since each button was pressed
+//element 4 is used for detecting rapid nibble toggles to display high score
 int debounceArray[4] = {debounceTime,debounceTime,debounceTime,debounceTime};
 
 //tracks when the current game was started to show the user their time
@@ -195,6 +197,7 @@ void setup(){
   
   //initialize frameCube to be empty
   clearCube();
+
 
 //  testCode();
   
@@ -224,15 +227,6 @@ void setup(){
   annihilateMode();
 }
 
-void testCode(){
-  for(char g='!'; g<128; g++){
-      displayChar(1,g);
-    //displayString("!!!!");
-    //displayChar(0,'!');
-    delay(500);
-    clearCube();
-  }
-}
 
 //sets up the guesses for the game
 //if describe is true, also display the gameMode selected
@@ -285,6 +279,13 @@ void setupGuesses(bool describe){
     asciiGuessIndex = 66; //symbols only
   }
   if(describe) delay(500);  
+
+//if any buttons are held, display high score for this gameMode
+  while(getButtons(true) > 0){
+    unsigned long highScore;
+    EEPROM.get(32*gameMode, highScore);
+    if(!displayTime(highScore)) break;  //if high score is too low to display skip it silently
+  }
 }
 
 
@@ -422,7 +423,20 @@ void annihilateMode(){
     delay(500);
     displayString("WON!");
     delay(500);
-    displayTime(millis()-startTime);  //display time in seconds
+
+    //check for high score
+    unsigned long newTime = (millis()-startTime);  //time this game took
+    unsigned long currentRecord;
+    int EEaddress = 32*gameMode;  //each high score is stored at a place unique to the gamemode
+    EEPROM.get(EEaddress,currentRecord);
+    if(newTime < currentRecord){
+      EEPROM.put(EEaddress, newTime);  //store new high score
+          displayString("NEW");
+          delay(500);
+          displayString("REC!");
+          delay(500);
+    }
+    displayTime(newTime);  //display time in seconds
     delay(3000);  //bask in the glory
     startTime = millis(); //reset timer
 
@@ -604,7 +618,10 @@ void timerSetup(){
 
 //displays the given time on the display
 //tim is a number of milliseconds
-void displayTime(unsigned long tim){
+//return 0 if the number is 2 big
+bool displayTime(unsigned long tim){
+  if(tim > 5999000) return false; //number too big to display, don't try
+
   int minutes = (tim/1000)/60;  //calculate minutes from tim
   int seconds = (tim/1000)%60;  //calculate seconds from tim
 
@@ -614,6 +631,7 @@ void displayTime(unsigned long tim){
   displayChar(4,':');
   displayChar(2,(seconds/10)+48);
   displayChar(3,(seconds%10)+48);
+  return true;
 }
 
 //update display and buttons asynchronously
@@ -691,7 +709,7 @@ byte getButtons(bool ignoreSwitch){
 
 //sets currentGuess to reflect the user's input on the buttons
 //waits the # of millis specified in debounceArray before being able to update a button
-byte updateButtons(){
+void updateButtons(){
   byte buttonValue = 0;
   if(!digitalRead(button_input_pin_bit0) && debounceArray[0] == debounceTime){
     buttonValue |= (1<<0);
@@ -709,6 +727,7 @@ byte updateButtons(){
     buttonValue |= (1<<3);
     debounceArray[3] = 0;
   }
+
   if(digitalRead(nibbleSwitchPin)) buttonValue = buttonValue << 4;
   currentGuess = currentGuess ^= buttonValue;
   for(int b=0; b<4; b++){
