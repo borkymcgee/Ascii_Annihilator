@@ -42,7 +42,7 @@ int hexGuessIndex = 0;
 int asciiGuessIndex = 0;
 
 //pin that the nibble select switch is connected to
-const int nibbleSwitchPin = 6;
+const int nibbleSwitchPin = 8;
 
 //how long in ms to wait to debounce button presses
 const int debounceTime = 200;
@@ -225,6 +225,12 @@ void setup(){
 
   //play the game!
   annihilateMode();
+}
+
+//delay but compensate game timer
+void dontlay(int delayTime){
+  delay(delayTime);
+  startTime += delayTime;
 }
 
 
@@ -420,9 +426,9 @@ void annihilateMode(){
   //check for win state
   if((hexGuessIndex+decGuessIndex+asciiGuessIndex == 0) || (wimpMode && asciiGuessIndex == 66)){
     displayString("YOU");
-    delay(500);
+    dontlay(500);
     displayString("WON!");
-    delay(500);
+    dontlay(500);
 
     //check for high score
     unsigned long newTime = (millis()-startTime);  //time this game took
@@ -509,34 +515,34 @@ void annihilateMode(){
             setButtons(correctGuess);
           }
           displayString("Good");
-          delay(500);
+          dontlay(500);
           displayString("Try!");
-          delay(500);
+          dontlay(500);
           //test if guess was the last one in the set
           switch(base){
             case 0: //ascii
               //if (wimp mode and 66) or not and 0, ascii done
               if((bitRead(gameMode,0) && gameMode != 15 && asciiGuessIndex == 66) || asciiGuessIndex == 0){
                 displayString("asci");
-                delay(500);
+                dontlay(500);
                 displayString("DONE");
-                delay(500);
+                dontlay(500);
               }
               break;
             case 1: //dec
               if(decGuessIndex == 0){
                 displayString("dec");
-                delay(500);
+                dontlay(500);
                 displayString("DONE");
-                delay(500);
+                dontlay(500);
               }
               break;
             case 2: //hex
               if(hexGuessIndex == 0){
                 displayString("hex");
-                delay(500);
+                dontlay(500);
                 displayString("DONE");
-                delay(500);
+                dontlay(500);
               }
               break;
           }
@@ -551,17 +557,17 @@ void annihilateMode(){
 
         //if it was 0
         if(correctGuess == 0){
-          delay(3000);  //pause for comedic effect
+          dontlay(3000);  //pause for comedic effect
           displayString("JK ");
-          delay(500);
+          dontlay(500);
         }else if(correctGuess == 69){ //nice
           displayString("nice");
-          delay(500);
+          dontlay(500);
         }
         displayString("Good");
-        delay(500);
+        dontlay(500);
         displayString("Job!");
-        delay(500);
+        dontlay(500);
         
         //test if guess was the last one in the set
         //TODO: why do we test twice?
@@ -570,25 +576,25 @@ void annihilateMode(){
             //if beginner mode and 66 or not and 0
             if((bitRead(gameMode,0) && gameMode != 15 && asciiGuessIndex == 66) || asciiGuessIndex == 0){
               displayString("asci");
-              delay(500);
+              dontlay(500);
               displayString("DONE");
-              delay(500);
+              dontlay(500);
             }
             break;
           case 1: //dec
             if(decGuessIndex == 0){
               displayString("dec");
-              delay(500);
+              dontlay(500);
               displayString("DONE");
-              delay(500);
+              dontlay(500);
             }
             break;
           case 2: //hex
             if(hexGuessIndex == 0){
               displayString("hex");
-              delay(500);
+              dontlay(500);
               displayString("DONE");
-              delay(500);
+              dontlay(500);
             }
             break;
         }
