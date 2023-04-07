@@ -42,7 +42,7 @@ int hexGuessIndex = 0;
 int asciiGuessIndex = 0;
 
 //pin that the nibble select switch is connected to
-const int nibbleSwitchPin = 8;
+const int nibbleSwitchPin = 6;
 
 //how long in ms to wait to debounce button presses
 const int debounceTime = 200;
