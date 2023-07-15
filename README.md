@@ -57,24 +57,22 @@ corresponding binary:
 01111101
 
 player must input:
-
 with nibble switch high:  0111
-
 with nibble switch low:   1101
 
 ### Selecting game mode: ###
 
 The Ascii Annihilator allows the user to select between several modes by holding certain buttons on boot. the buttons are assigned as follows:
 
--bit 3: ascii mode
+- bit 3: ascii mode
 
--bit 2: decimal mode
+- bit 2: decimal mode
 
--bit 1: hexadecimal mode
+- bit 1: hexadecimal mode
 
--bit 0: wimp mode
+- bit 0: wimp mode
 
--all bits: expert mode
+- all bits: expert mode
 
 ### Ascii mode ###
 the player gets quizzed on all of ascii, including non-printing characters, symbols, numbers, and letters
