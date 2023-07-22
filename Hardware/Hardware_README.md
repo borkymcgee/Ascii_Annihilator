@@ -16,9 +16,9 @@ In this directory you will find two images: [front.png](front.png) and [back.png
 
 	5a. Solder the rest of the pins on the atmega328
 
-	5b. Bend the pins of the alphanumeric display outward in the pattern shown by alphabend.png [TODO: generate and add this image].
+	5b. Bend the pins of the alphanumeric display outward to match the green part of [front.png](front.png).
 
-	5c. Solder the alphanumeric display to the pins as shown in front.png [TODO: add this to the image]
+	5c. Solder the alphanumeric display to the pins as shown in [front.png](front.png).
 
 	5d. (Optional) Solder the battery holders on the opposite side of the board as is intended. This is optional but makes holding and playing the game MUCH more comfortable.
 
