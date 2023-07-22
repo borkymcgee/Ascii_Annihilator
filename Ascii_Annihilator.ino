@@ -42,7 +42,7 @@ int hexGuessIndex = 0;
 int asciiGuessIndex = 0;
 
 //pin that the nibble select switch is connected to
-const int nibbleSwitchPin = 6;
+const int nibbleSwitchPin = 8;
 
 //how long in ms to wait to debounce button presses
 const int debounceTime = 200;
@@ -199,7 +199,7 @@ void setup(){
   clearCube();
 
 
-//  testCode();
+  //testCode();
   
   //set game mode
   delay(100); //button pins seem to take a moment to get pulled low, so wait a sec
@@ -225,6 +225,27 @@ void setup(){
 
   //play the game!
   annihilateMode();
+}
+
+void testCode(){
+  for(int j=0; j<4; j++){
+    byte b1 = 0b10000000;
+    byte b2 = 0b00000000;
+    for(int i=0; i<8; i++){
+      setSegments(j,b1,b2);;
+      delay(1000);
+      clearCube();
+      b1 = b1 >> 1;
+    }
+    b1 = 0;
+    b2 = 0b10000000;
+    for(int i=0; i<8; i++){
+      setSegments(j,b1,b2);
+      delay(1000);
+      clearCube();
+      b2 = b2 >> 1;
+    }
+  }
 }
 
 //delay but compensate game timer
